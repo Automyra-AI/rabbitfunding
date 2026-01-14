@@ -1,43 +1,47 @@
 import { formatCurrency } from '../../utils/calculations'
-import { DollarSign, Lock, Clock, TrendingDown } from 'lucide-react'
+import { DollarSign, Wallet, PiggyBank, TrendingDown } from 'lucide-react'
 
 const BalanceCard = ({ stats }) => {
   const balanceItems = [
     {
-      label: 'Available Capital',
+      label: 'Principal Collected',
       value: stats.available,
       color: 'text-green-600',
       bgColor: 'bg-green-50',
       borderColor: 'border-green-200',
       icon: DollarSign,
-      iconColor: 'text-green-600'
+      iconColor: 'text-green-600',
+      description: 'Money returned from deals'
     },
     {
-      label: 'Frozen Capital',
-      value: stats.frozen,
+      label: 'Deployed Capital',
+      value: stats.deployed,
       color: 'text-blue-600',
       bgColor: 'bg-blue-50',
       borderColor: 'border-blue-200',
-      icon: Lock,
-      iconColor: 'text-blue-600'
+      icon: Wallet,
+      iconColor: 'text-blue-600',
+      description: 'Outstanding principal'
     },
     {
-      label: 'Pending Transactions',
-      value: stats.pending,
-      color: 'text-amber-600',
-      bgColor: 'bg-amber-50',
-      borderColor: 'border-amber-200',
-      icon: Clock,
-      iconColor: 'text-amber-600'
+      label: 'Fees Collected',
+      value: stats.reserve,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50',
+      borderColor: 'border-purple-200',
+      icon: PiggyBank,
+      iconColor: 'text-purple-600',
+      description: 'Total CAFs earned'
     },
     {
-      label: 'Outstanding Purchases',
+      label: 'Total Outstanding',
       value: stats.outstandingPurchases,
       color: 'text-red-600',
       bgColor: 'bg-red-50',
       borderColor: 'border-red-200',
       icon: TrendingDown,
-      iconColor: 'text-red-600'
+      iconColor: 'text-red-600',
+      description: 'Principal not yet collected'
     },
   ]
 
@@ -68,6 +72,9 @@ const BalanceCard = ({ stats }) => {
                 <p className={`text-3xl font-bold ${item.color} tracking-tight`}>
                   {formatCurrency(item.value)}
                 </p>
+                {item.description && (
+                  <p className="text-xs text-gray-500">{item.description}</p>
+                )}
               </div>
             </div>
           )

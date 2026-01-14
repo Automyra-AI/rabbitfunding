@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sheets API Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #0ea5e9;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8fafc;
+            border-left: 4px solid #0ea5e9;
+            border-radius: 8px;
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #1e293b;
+            font-size: 18px;
+        }
+        button {
+            background: linear-gradient(to right, #0ea5e9, #0284c7);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            margin: 10px 10px 10px 0;
+            transition: all 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .result.success {
+            background: #dcfce7;
+            border: 1px solid #86efac;
+            color: #166534;
+        }
+        .result.error {
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+        }
+        .result.info {
+            background: #e0f2fe;
+            border: 1px solid #7dd3fc;
+            color: #075985;
+        }
+        .config {
+            background: #fef3c7;
+            border: 1px solid #fcd34d;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 13px;
+            font-family: 'Courier New', monospace;
+        }
+        .config-title {
+            font-weight: bold;
+            color: #92400e;
+            margin-bottom: 10px;
+        }
+        .url-test {
+            background: white;
+            border: 2px solid #e2e8f0;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            margin: 10px 0;
+            word-break: break-all;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .status-badge.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+        .status-badge.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .instructions {
+            background: #f0f9ff;
+            border: 2px solid #bae6fd;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #0c4a6e;
+        }
+        .instructions ol {
+            color: #075985;
+            line-height: 1.8;
+        }
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #0ea5e9;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Google Sheets API Diagnostics</h1>
+        <p class="subtitle">Test your Google Sheets integration and see exactly what's happening</p>
+
+        <div class="config">
+            <div class="config-title">📋 Current Configuration</div>
+            <div>API Key: AIzaSyDuTd3Jo0AHBrwLwROdJRoLhfiaCY-IBI4</div>
+            <div>Spreadsheet ID: 1SnG3tHCuvhijtHU0W_kCdmWVRLSCNDxRi7CiEBFQvOo</div>
+            <div>Deals Tab: "Deals"</div>
+            <div>Payout Events Tab: "Payout Events"</div>
+        </div>
+
+        <div class="instructions">
+            <h3>⚠️ Before Testing:</h3>
+            <ol>
+                <li><strong>Make your Google Sheet PUBLIC:</strong>
+                    <ul>
+                        <li>Open: <a href="https://docs.google.com/spreadsheets/d/1SnG3tHCuvhijtHU0W_kCdmWVRLSCNDxRi7CiEBFQvOo/edit" target="_blank">Your Google Sheet</a></li>
+                        <li>Click "Share" button (top right)</li>
+                        <li>Change to "Anyone with the link" + "Viewer"</li>
+                        <li>Click "Done"</li>
+                    </ul>
+                </li>
+                <li><strong>Verify tab names match exactly:</strong> "Deals" and "Payout Events"</li>
+                <li><strong>Ensure Google Sheets API is enabled</strong> in Google Cloud Console</li>
+            </ol>
+        </div>
+
+        <div class="test-section">
+            <h2>🔍 Test 1: Fetch "Deals" Tab</h2>
+            <button onclick="testDeals()">Test Deals Tab</button>
+            <button onclick="copyDealsUrl()">Copy Test URL</button>
+            <div class="url-test">
+                <strong>Test URL:</strong><br>
+                https://sheets.googleapis.com/v4/spreadsheets/1SnG3tHCuvhijtHU0W_kCdmWVRLSCNDxRi7CiEBFQvOo/values/Deals?key=AIzaSyDuTd3Jo0AHBrwLwROdJRoLhfiaCY-IBI4
+            </div>
+            <div id="deals-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔍 Test 2: Fetch "Payout Events" Tab</h2>
+            <button onclick="testPayoutEvents()">Test Payout Events Tab</button>
+            <button onclick="copyPayoutUrl()">Copy Test URL</button>
+            <div class="url-test">
+                <strong>Test URL:</strong><br>
+                https://sheets.googleapis.com/v4/spreadsheets/1SnG3tHCuvhijtHU0W_kCdmWVRLSCNDxRi7CiEBFQvOo/values/Payout%20Events?key=AIzaSyDuTd3Jo0AHBrwLwROdJRoLhfiaCY-IBI4
+            </div>
+            <div id="payout-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Summary</h2>
+            <div id="summary"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'AIzaSyDuTd3Jo0AHBrwLwROdJRoLhfiaCY-IBI4';
+        const SPREADSHEET_ID = '1SnG3tHCuvhijtHU0W_kCdmWVRLSCNDxRi7CiEBFQvOo';
+
+        async function testDeals() {
+            const resultDiv = document.getElementById('deals-result');
+            resultDiv.innerHTML = '<div class="result info">⏳ Testing... <span class="loading"></span></div>';
+
+            const sheetName = 'Deals';
+            const encodedSheetName = encodeURIComponent(sheetName);
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodedSheetName}?key=${API_KEY}`;
+
+            console.log('Testing Deals URL:', url);
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    // Error response
+                    let errorMessage = `❌ ERROR ${response.status}: ${response.statusText}\n\n`;
+                    errorMessage += `Error Code: ${data.error?.code || 'Unknown'}\n`;
+                    errorMessage += `Message: ${data.error?.message || 'No error message'}\n\n`;
+
+                    if (response.status === 403) {
+                        errorMessage += '🔒 PERMISSION DENIED!\n\n';
+                        errorMessage += 'This means your Google Sheet is NOT public.\n\n';
+                        errorMessage += 'Fix:\n';
+                        errorMessage += '1. Open your Google Sheet\n';
+                        errorMessage += '2. Click "Share" button\n';
+                        errorMessage += '3. Change to "Anyone with the link" + "Viewer"\n';
+                        errorMessage += '4. Click "Done" and test again\n';
+                    } else if (response.status === 404) {
+                        errorMessage += '❓ NOT FOUND!\n\n';
+                        errorMessage += 'Possible causes:\n';
+                        errorMessage += '1. Sheet tab name is not exactly "Deals"\n';
+                        errorMessage += '2. Spreadsheet ID is incorrect\n';
+                        errorMessage += '3. Tab was deleted or renamed\n';
+                    } else if (response.status === 400) {
+                        errorMessage += '⚠️ BAD REQUEST!\n\n';
+                        errorMessage += 'Possible causes:\n';
+                        errorMessage += '1. Invalid sheet name\n';
+                        errorMessage += '2. Malformed API request\n';
+                    } else if (response.status === 401) {
+                        errorMessage += '🔑 UNAUTHORIZED!\n\n';
+                        errorMessage += 'Your API key is invalid or expired.\n';
+                    }
+
+                    errorMessage += '\nFull Error Response:\n' + JSON.stringify(data, null, 2);
+
+                    resultDiv.innerHTML = `<div class="result error">${errorMessage}</div>`;
+                } else {
+                    // Success response
+                    const rows = data.values || [];
+                    let successMessage = `✅ SUCCESS!\n\n`;
+                    successMessage += `Found ${rows.length} rows in "Deals" tab\n`;
+                    if (rows.length > 0) {
+                        successMessage += `Headers: ${rows[0].join(', ')}\n`;
+                        successMessage += `Data rows: ${rows.length - 1}\n\n`;
+                    }
+                    successMessage += `Preview (first 5 rows):\n`;
+                    successMessage += JSON.stringify(rows.slice(0, 5), null, 2);
+
+                    resultDiv.innerHTML = `<div class="result success">${successMessage}</div>`;
+                }
+
+                updateSummary();
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ NETWORK ERROR:\n\n${error.message}\n\nCheck your internet connection.</div>`;
+                console.error('Error:', error);
+            }
+        }
+
+        async function testPayoutEvents() {
+            const resultDiv = document.getElementById('payout-result');
+            resultDiv.innerHTML = '<div class="result info">⏳ Testing... <span class="loading"></span></div>';
+
+            const sheetName = 'Payout Events';
+            const encodedSheetName = encodeURIComponent(sheetName);
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodedSheetName}?key=${API_KEY}`;
+
+            console.log('Testing Payout Events URL:', url);
+
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (!response.ok) {
+                    // Error response
+                    let errorMessage = `❌ ERROR ${response.status}: ${response.statusText}\n\n`;
+                    errorMessage += `Error Code: ${data.error?.code || 'Unknown'}\n`;
+                    errorMessage += `Message: ${data.error?.message || 'No error message'}\n\n`;
+
+                    if (response.status === 403) {
+                        errorMessage += '🔒 PERMISSION DENIED!\n\n';
+                        errorMessage += 'This means your Google Sheet is NOT public.\n\n';
+                        errorMessage += 'Fix:\n';
+                        errorMessage += '1. Open your Google Sheet\n';
+                        errorMessage += '2. Click "Share" button\n';
+                        errorMessage += '3. Change to "Anyone with the link" + "Viewer"\n';
+                        errorMessage += '4. Click "Done" and test again\n';
+                    } else if (response.status === 404) {
+                        errorMessage += '❓ NOT FOUND!\n\n';
+                        errorMessage += 'Possible causes:\n';
+                        errorMessage += '1. Sheet tab name is not exactly "Payout Events"\n';
+                        errorMessage += '2. Tab was deleted or renamed\n';
+                        errorMessage += '3. Check spelling and spacing\n';
+                    } else if (response.status === 400) {
+                        errorMessage += '⚠️ BAD REQUEST!\n\n';
+                        errorMessage += 'Possible causes:\n';
+                        errorMessage += '1. Invalid sheet name\n';
+                        errorMessage += '2. Malformed API request\n';
+                    } else if (response.status === 401) {
+                        errorMessage += '🔑 UNAUTHORIZED!\n\n';
+                        errorMessage += 'Your API key is invalid or expired.\n';
+                    }
+
+                    errorMessage += '\nFull Error Response:\n' + JSON.stringify(data, null, 2);
+
+                    resultDiv.innerHTML = `<div class="result error">${errorMessage}</div>`;
+                } else {
+                    // Success response
+                    const rows = data.values || [];
+                    let successMessage = `✅ SUCCESS!\n\n`;
+                    successMessage += `Found ${rows.length} rows in "Payout Events" tab\n`;
+                    if (rows.length > 0) {
+                        successMessage += `Headers: ${rows[0].join(', ')}\n`;
+                        successMessage += `Data rows: ${rows.length - 1}\n\n`;
+                    }
+                    successMessage += `Preview (first 5 rows):\n`;
+                    successMessage += JSON.stringify(rows.slice(0, 5), null, 2);
+
+                    resultDiv.innerHTML = `<div class="result success">${successMessage}</div>`;
+                }
+
+                updateSummary();
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="result error">❌ NETWORK ERROR:\n\n${error.message}\n\nCheck your internet connection.</div>`;
+                console.error('Error:', error);
+            }
+        }
+
+        function copyDealsUrl() {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/Deals?key=${API_KEY}`;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('✅ Deals test URL copied to clipboard!\n\nPaste it in a new browser tab to test.');
+            });
+        }
+
+        function copyPayoutUrl() {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/Payout%20Events?key=${API_KEY}`;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('✅ Payout Events test URL copied to clipboard!\n\nPaste it in a new browser tab to test.');
+            });
+        }
+
+        function updateSummary() {
+            const dealsResult = document.getElementById('deals-result');
+            const payoutResult = document.getElementById('payout-result');
+            const summaryDiv = document.getElementById('summary');
+
+            const dealsSuccess = dealsResult.querySelector('.result.success') !== null;
+            const payoutSuccess = payoutResult.querySelector('.result.success') !== null;
+
+            let summary = '';
+
+            if (dealsSuccess && payoutSuccess) {
+                summary = `
+                    <div class="result success">
+                        🎉 ALL TESTS PASSED!
+
+                        Both tabs are accessible and contain data.
+                        Your Google Sheets integration is working correctly!
+
+                        ✅ Deals tab: Connected
+                        ✅ Payout Events tab: Connected
+
+                        Next step: Open your React app at http://localhost:3001 and check the browser console.
+                        You should see: "✅ Found X deals in Google Sheets"
+                    </div>
+                `;
+            } else if (dealsSuccess || payoutSuccess) {
+                summary = `
+                    <div class="result info">
+                        ⚠️ PARTIAL SUCCESS
+
+                        ${dealsSuccess ? '✅ Deals tab: Working' : '❌ Deals tab: Failed'}
+                        ${payoutSuccess ? '✅ Payout Events tab: Working' : '❌ Payout Events tab: Failed'}
+
+                        Fix the failed tab(s) above and test again.
+                    </div>
+                `;
+            }
+
+            summaryDiv.innerHTML = summary;
+        }
+
+        // Add instructions on page load
+        window.addEventListener('load', () => {
+            console.log('Google Sheets API Diagnostic Tool Ready');
+            console.log('Click the test buttons to diagnose your connection');
+        });
+    </script>
+</body>
+</html>

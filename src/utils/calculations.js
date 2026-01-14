@@ -2,8 +2,8 @@ export const calculateStats = (deals, payoutEvents) => {
   if (!deals || deals.length === 0) {
     return {
       available: 0,
-      frozen: 0,
-      pending: 0,
+      deployed: 0,
+      reserve: 0,
       outstandingPurchases: 0,
       syndicatedAmount: 0,
       netSyndicatedAmount: 0,
@@ -12,37 +12,67 @@ export const calculateStats = (deals, payoutEvents) => {
       payback: 0,
       paidBack: 0,
       outstanding: 0,
-      outstandingPercentage: 0
+      outstandingPercentage: 0,
+      activeDeals: 0,
+      totalDeals: 0,
+      avgPaidBackPercent: 0,
+      totalPayments: 0
     }
   }
 
-  const syndicatedAmount = deals.reduce((sum, deal) => sum + (parseFloat(deal.principal_advanced) || 0), 0)
-  const totalCAFs = deals.reduce((sum, deal) => sum + (parseFloat(deal.fee_collected) || 0), 0)
-  const principalCollected = deals.reduce((sum, deal) => sum + (parseFloat(deal.principal_collected) || 0), 0)
+  // Financial calculations - data is already parsed as numbers from googleSheets.js
+  const syndicatedAmount = deals.reduce((sum, deal) => sum + (deal.principal_advanced || 0), 0)
+  const totalCAFs = deals.reduce((sum, deal) => sum + (deal.fee_collected || 0), 0)
+  const principalCollected = deals.reduce((sum, deal) => sum + (deal.principal_collected || 0), 0)
+
   const paidBack = principalCollected + totalCAFs
   const outstanding = syndicatedAmount - principalCollected
   const tcp = syndicatedAmount + totalCAFs
   const netSyndicatedAmount = syndicatedAmount - totalCAFs
 
-  // These would be calculated based on your actual business logic
-  // For now, using placeholder calculations
-  const available = syndicatedAmount * 0.15 // Example: 15% of syndicated amount
-  const frozen = syndicatedAmount * 0.05 // Example: 5% frozen
-  const pending = syndicatedAmount * 0.02 // Example: 2% pending
+  // Count active deals
+  const activeDeals = deals.filter(deal =>
+    deal.status?.toLowerCase() === 'active'
+  ).length
+
+  // Calculate average paid back percentage
+  const dealsWithPaidBack = deals.map(deal => {
+    const dealTcp = (deal.principal_advanced || 0) + (deal.fee_collected || 0)
+    const dealPaidBack = (deal.principal_collected || 0) + (deal.fee_collected || 0)
+    return dealTcp > 0 ? (dealPaidBack / dealTcp) * 100 : 0
+  })
+  const avgPaidBackPercent = dealsWithPaidBack.length > 0
+    ? dealsWithPaidBack.reduce((sum, pct) => sum + pct, 0) / dealsWithPaidBack.length
+    : 0
+
+  // Total payments from payout events
+  const totalPayments = payoutEvents ? payoutEvents.length : 0
+
+  // Capital breakdown (based on outstanding amounts)
+  // Available = Principal collected (money returned)
+  // Deployed = Outstanding principal (money still out)
+  // Reserve = Fees collected
+  const available = principalCollected
+  const deployed = outstanding
+  const reserve = totalCAFs
 
   return {
     available,
-    frozen,
-    pending,
+    deployed,
+    reserve,
     outstandingPurchases: outstanding,
     syndicatedAmount,
     netSyndicatedAmount,
     totalCAFs,
     tcp,
-    payback: tcp, // Assuming payback equals TCP
+    payback: tcp,
     paidBack,
     outstanding,
-    outstandingPercentage: syndicatedAmount > 0 ? (outstanding / syndicatedAmount) * 100 : 0
+    outstandingPercentage: syndicatedAmount > 0 ? (outstanding / syndicatedAmount) * 100 : 0,
+    activeDeals,
+    totalDeals: deals.length,
+    avgPaidBackPercent,
+    totalPayments
   }
 }
 

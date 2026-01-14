@@ -18,17 +18,19 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
   // Enhance deals with calculated fields
   const enhancedDeals = useMemo(() => {
     return deals.map(deal => {
-      const principalAdvanced = parseFloat(deal.principal_advanced) || 0
-      const feeCollected = parseFloat(deal.fee_collected) || 0
-      const principalCollected = parseFloat(deal.principal_collected) || 0
+      // Data is already parsed as numbers from googleSheets.js
+      const principalAdvanced = deal.principal_advanced || 0
+      const feeCollected = deal.fee_collected || 0
+      const principalCollected = deal.principal_collected || 0
       const tcp = principalAdvanced + feeCollected
       const paidBack = principalCollected + feeCollected
       const outstanding = principalAdvanced - principalCollected
       const paidBackPercent = calculatePaybackPercentage(paidBack, tcp)
 
-      // Count payments for this deal
+      // Count payments for this deal - match by client name
       const dealPayments = payoutEvents.filter(
-        event => event.client_name === deal.qbo_customer_name
+        event => event.client_name?.toLowerCase() === deal.qbo_customer_name?.toLowerCase() ||
+                 event.client_name?.toLowerCase() === deal.client_name?.toLowerCase()
       )
       const paymentCount = dealPayments.length
 
@@ -76,14 +78,14 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
   const paginatedDeals = sortedDeals.slice(startIndex, startIndex + ITEMS_PER_PAGE)
 
-  // Calculate totals
+  // Calculate totals - data is already parsed as numbers
   const totals = useMemo(() => {
     return sortedDeals.reduce((acc, deal) => ({
-      syndicated: acc.syndicated + (parseFloat(deal.principal_advanced) || 0),
-      cafs: acc.cafs + (parseFloat(deal.fee_collected) || 0),
-      tcp: acc.tcp + deal.tcp,
-      paidBack: acc.paidBack + deal.paidBack,
-      outstanding: acc.outstanding + deal.outstanding
+      syndicated: acc.syndicated + (deal.principal_advanced || 0),
+      cafs: acc.cafs + (deal.fee_collected || 0),
+      tcp: acc.tcp + (deal.tcp || 0),
+      paidBack: acc.paidBack + (deal.paidBack || 0),
+      outstanding: acc.outstanding + (deal.outstanding || 0)
     }), { syndicated: 0, cafs: 0, tcp: 0, paidBack: 0, outstanding: 0 })
   }, [sortedDeals])
 

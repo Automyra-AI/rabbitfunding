@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, TrendingUp, DollarSign, Award, Target, CheckCircle, AlertCircle, Sparkles } from 'lucide-react'
-import { formatCurrency, formatPercentage } from '../../utils/calculations'
+import { ChevronDown, ChevronUp, TrendingUp, Award, CheckCircle, Sparkles, Users, CreditCard, Percent } from 'lucide-react'
+import { formatCurrency, formatPercentage, formatNumber } from '../../utils/calculations'
 
 const PerformanceStatsCard = ({ stats }) => {
   const [expanded, setExpanded] = useState(true)
@@ -13,7 +13,8 @@ const PerformanceStatsCard = ({ stats }) => {
       icon: TrendingUp,
       color: 'text-blue-700',
       bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200'
+      borderColor: 'border-blue-200',
+      description: 'Total principal advanced'
     },
     {
       label: 'Net Syndicated Amount',
@@ -26,49 +27,54 @@ const PerformanceStatsCard = ({ stats }) => {
       borderColor: 'border-primary/30'
     },
     {
+      label: 'Active Deals',
+      value: `${formatNumber(stats.activeDeals)} / ${formatNumber(stats.totalDeals)}`,
+      highlight: false,
+      icon: Users,
+      color: 'text-green-700',
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-200',
+      description: 'Currently active / Total deals'
+    },
+    {
       label: 'Total CAFs Collected',
       value: formatCurrency(stats.totalCAFs),
       highlight: false,
       icon: Award,
       color: 'text-emerald-700',
       bgColor: 'bg-emerald-50',
-      borderColor: 'border-emerald-200'
-    },
-    {
-      label: 'Total Contract Price (TCP)',
-      value: formatCurrency(stats.tcp),
-      highlight: false,
-      icon: DollarSign,
-      color: 'text-violet-700',
-      bgColor: 'bg-violet-50',
-      borderColor: 'border-violet-200'
-    },
-    {
-      label: 'Expected Payback',
-      value: formatCurrency(stats.payback),
-      highlight: false,
-      icon: Target,
-      color: 'text-indigo-700',
-      bgColor: 'bg-indigo-50',
-      borderColor: 'border-indigo-200'
+      borderColor: 'border-emerald-200',
+      description: 'Total fees earned'
     },
     {
       label: 'Amount Paid Back',
       value: formatCurrency(stats.paidBack),
       highlight: false,
       icon: CheckCircle,
-      color: 'text-green-700',
-      bgColor: 'bg-green-50',
-      borderColor: 'border-green-200'
+      color: 'text-violet-700',
+      bgColor: 'bg-violet-50',
+      borderColor: 'border-violet-200',
+      description: 'Principal + fees collected'
     },
     {
-      label: 'Outstanding Balance',
-      value: `${formatCurrency(stats.outstanding)} (${formatPercentage(stats.outstandingPercentage)})`,
+      label: 'Average Paid Back %',
+      value: formatPercentage(stats.avgPaidBackPercent),
       highlight: false,
-      icon: AlertCircle,
-      color: 'text-orange-700',
-      bgColor: 'bg-orange-50',
-      borderColor: 'border-orange-200'
+      icon: Percent,
+      color: 'text-amber-700',
+      bgColor: 'bg-amber-50',
+      borderColor: 'border-amber-200',
+      description: 'Avg collection rate across deals'
+    },
+    {
+      label: 'Total Payments',
+      value: formatNumber(stats.totalPayments),
+      highlight: false,
+      icon: CreditCard,
+      color: 'text-rose-700',
+      bgColor: 'bg-rose-50',
+      borderColor: 'border-rose-200',
+      description: 'Total payout events processed'
     },
   ]
 
