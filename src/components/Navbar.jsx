@@ -1,9 +1,9 @@
-import { Menu, Download, User, RefreshCw, Activity } from 'lucide-react'
+import { Menu, Download, User, RefreshCw, Activity, Rabbit } from 'lucide-react'
 import { useData } from '../context/DataContext'
 
 const Navbar = ({ onMenuClick }) => {
   const { lastUpdated, refetch, loading } = useData()
-  const appName = import.meta.env.VITE_APP_NAME || 'OrgMeter'
+  const appName = import.meta.env.VITE_APP_NAME || 'RabbitFunding'
 
   const handleExport = () => {
     // Export functionality would go here
@@ -11,9 +11,9 @@ const Navbar = ({ onMenuClick }) => {
   }
 
   return (
-    <nav className="bg-white border-b-2 border-gray-200 sticky top-0 z-50 shadow-sm">
+    <nav className="bg-white border-b-2 border-gray-200 flex-shrink-0 z-50 shadow-sm">
       <div className="px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
+        <div className="flex justify-between items-center h-16">
           {/* Left side */}
           <div className="flex items-center space-x-4">
             <button
@@ -24,16 +24,14 @@ const Navbar = ({ onMenuClick }) => {
             </button>
 
             <div className="flex items-center space-x-3">
-              <div className="p-2 bg-gradient-to-br from-primary to-primary-dark rounded-xl shadow-lg hidden sm:block">
-                <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
+              <div className="p-2 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg hidden sm:flex items-center justify-center">
+                <Rabbit className="h-7 w-7 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary-dark bg-clip-text text-transparent">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent">
                   {appName}
                 </h1>
-                <p className="text-xs text-gray-500 hidden sm:block">MCA Syndication Platform</p>
+                <p className="text-xs text-gray-500 hidden sm:block">MCA Portal</p>
               </div>
             </div>
           </div>

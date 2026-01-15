@@ -176,3 +176,14 @@
 .data-table .total-row td {
   @apply text-gray-900;
 }
+
+/* Layout fixes for full-screen fit */
+html, body, #root {
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Ensure proper overflow handling for main content */
+main {
+  scrollbar-gutter: stable;
+}

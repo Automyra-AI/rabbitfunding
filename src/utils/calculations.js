@@ -95,8 +95,15 @@ export const formatDate = (dateString) => {
   if (!dateString) return '-'
 
   try {
-    const date = new Date(dateString)
-    if (isNaN(date.getTime())) return dateString
+    // Handle format like "JAN 13, 2026 02:01PM"
+    // Just extract and return the date part (remove time)
+    const dateOnly = dateString.replace(/\s+\d{1,2}:\d{2}(AM|PM)/i, '').trim()
+
+    const date = new Date(dateOnly)
+    if (isNaN(date.getTime())) {
+      // If parsing fails, return the original string without time
+      return dateOnly || dateString
+    }
 
     return new Intl.DateTimeFormat('en-US', {
       month: 'short',

@@ -22,7 +22,12 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
       const principalAdvanced = deal.principal_advanced || 0
       const feeCollected = deal.fee_collected || 0
       const principalCollected = deal.principal_collected || 0
-      const tcp = principalAdvanced + feeCollected
+
+      // Add 10% interest to payback calculation
+      const interest = principalAdvanced * 0.10
+      const tcp = principalAdvanced + feeCollected + interest
+      const paybackAmount = principalAdvanced + interest // Payback = Principal + 10% interest
+
       const paidBack = principalCollected + feeCollected
       const outstanding = principalAdvanced - principalCollected
       const paidBackPercent = calculatePaybackPercentage(paidBack, tcp)
@@ -34,13 +39,18 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
       )
       const paymentCount = dealPayments.length
 
+      // Calculate Factor Rate = TCP / Principal (e.g., 1.10 for 10% interest)
+      const factorRate = principalAdvanced > 0 ? (tcp / principalAdvanced).toFixed(2) : '0.00'
+
       return {
         ...deal,
         tcp,
+        paybackAmount,
         paidBack,
         outstanding,
         paidBackPercent,
-        paymentCount
+        paymentCount,
+        factorRate
       }
     })
   }, [deals, payoutEvents])
@@ -84,9 +94,10 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
       syndicated: acc.syndicated + (deal.principal_advanced || 0),
       cafs: acc.cafs + (deal.fee_collected || 0),
       tcp: acc.tcp + (deal.tcp || 0),
+      paybackAmount: acc.paybackAmount + (deal.paybackAmount || 0),
       paidBack: acc.paidBack + (deal.paidBack || 0),
       outstanding: acc.outstanding + (deal.outstanding || 0)
-    }), { syndicated: 0, cafs: 0, tcp: 0, paidBack: 0, outstanding: 0 })
+    }), { syndicated: 0, cafs: 0, tcp: 0, paybackAmount: 0, paidBack: 0, outstanding: 0 })
   }, [sortedDeals])
 
   const handleSort = (key) => {
@@ -138,14 +149,6 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
                   <div className="flex items-center">
                     Syndicated
                     <SortIcon columnKey="principal_advanced" />
-                  </div>
-                </th>
-              )}
-              {visibleColumns.syndicationPercent && (
-                <th className="sortable" onClick={() => handleSort('syndication_percentage')}>
-                  <div className="flex items-center">
-                    Syndication %
-                    <SortIcon columnKey="syndication_percentage" />
                   </div>
                 </th>
               )}
@@ -234,9 +237,6 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
                 {visibleColumns.syndicated && (
                   <td className="font-medium">{formatCurrency(deal.principal_advanced)}</td>
                 )}
-                {visibleColumns.syndicationPercent && (
-                  <td>{deal.syndication_percentage || '100'}%</td>
-                )}
                 {visibleColumns.cafs && (
                   <td>{formatCurrency(deal.fee_collected)}</td>
                 )}
@@ -244,14 +244,14 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
                   <td>{formatCurrency(deal.tcp)}</td>
                 )}
                 {visibleColumns.factorRate && (
-                  <td>{deal.factor_rate || '-'}</td>
+                  <td>{deal.factorRate}</td>
                 )}
                 {visibleColumns.payback && (
-                  <td>{formatCurrency(deal.tcp)}</td>
+                  <td>{formatCurrency(deal.paybackAmount)}</td>
                 )}
                 {visibleColumns.payments && (
                   <td>
-                    {formatCurrency(deal.paidBack)} ({deal.paymentCount})
+                    {formatCurrency(deal.paidBack)}
                   </td>
                 )}
                 {visibleColumns.paidBackPercent && (
@@ -288,16 +288,15 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
               {visibleColumns.syndicated && (
                 <td className="font-bold">{formatCurrency(totals.syndicated)}</td>
               )}
-              {visibleColumns.syndicationPercent && <td></td>}
               {visibleColumns.cafs && (
                 <td className="font-bold">{formatCurrency(totals.cafs)}</td>
               )}
               {visibleColumns.tcp && (
                 <td className="font-bold">{formatCurrency(totals.tcp)}</td>
               )}
-              {visibleColumns.factorRate && <td></td>}
+              {visibleColumns.factorRate && <td className="font-bold">1.10</td>}
               {visibleColumns.payback && (
-                <td className="font-bold">{formatCurrency(totals.tcp)}</td>
+                <td className="font-bold">{formatCurrency(totals.paybackAmount)}</td>
               )}
               {visibleColumns.payments && (
                 <td className="font-bold">{formatCurrency(totals.paidBack)}</td>

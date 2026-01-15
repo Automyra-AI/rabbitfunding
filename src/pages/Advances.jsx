@@ -10,12 +10,13 @@ import { formatCurrency } from '../utils/calculations'
 const Advances = () => {
   const { deals, payoutEvents, loading, error, refetch } = useData()
   const [statusFilter, setStatusFilter] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [amountFilter, setAmountFilter] = useState('all')
   const [visibleColumns, setVisibleColumns] = useState({
     state: true,
     advanceId: true,
-    type: true,
+    type: false,
     syndicated: true,
-    syndicationPercent: true,
     cafs: true,
     tcp: true,
     factorRate: true,
@@ -27,11 +28,45 @@ const Advances = () => {
   })
 
   const filteredDeals = useMemo(() => {
-    if (statusFilter === 'all') return deals
-    return deals.filter(deal =>
-      deal.status?.toLowerCase() === statusFilter.toLowerCase()
-    )
-  }, [deals, statusFilter])
+    let filtered = deals
+
+    // Filter by status
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(deal =>
+        deal.status?.toLowerCase() === statusFilter.toLowerCase()
+      )
+    }
+
+    // Filter by search query (name)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim()
+      filtered = filtered.filter(deal =>
+        deal.qbo_customer_name?.toLowerCase().includes(query) ||
+        deal.client_name?.toLowerCase().includes(query)
+      )
+    }
+
+    // Filter by amount
+    if (amountFilter !== 'all') {
+      filtered = filtered.filter(deal => {
+        const amount = deal.principal_advanced || 0
+        switch (amountFilter) {
+          case 'under10k':
+            return amount < 10000
+          case '10k-50k':
+            return amount >= 10000 && amount < 50000
+          case '50k-100k':
+            return amount >= 50000 && amount < 100000
+          case 'over100k':
+            return amount >= 100000
+          default:
+            return true
+        }
+      })
+    }
+
+    return filtered
+  }, [deals, statusFilter, searchQuery, amountFilter])
 
   // Calculate quick stats
   const quickStats = useMemo(() => {
@@ -87,6 +122,10 @@ const Advances = () => {
       <AdvancesFilters
         statusFilter={statusFilter}
         onStatusFilterChange={setStatusFilter}
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
+        amountFilter={amountFilter}
+        onAmountFilterChange={setAmountFilter}
         visibleColumns={visibleColumns}
         onVisibleColumnsChange={setVisibleColumns}
         totalCount={deals.length}

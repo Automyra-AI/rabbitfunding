@@ -52,52 +52,48 @@ export const fetchDealsData = async () => {
     console.log('Sheet headers:', headers)
 
     // Convert rows to objects with proper data mapping
+    // Sheet columns by INDEX (0-based):
+    // 0: QBO Customer ID, 1: QBO Customer Name, 2: Contract ID, 3: Expected Payment Amount,
+    // 4: Actum Merchant ID, 5: Funded Date (FIRST ONE - has actual date!), 6: Principal Advanced,
+    // 7: Deal ID, 8: Client Name, 9: Principal Collected, 10: Status, 11: Funded Date (duplicate - empty),
+    // 12: Expected Amount, 13: Expected Amount Low, 14: Expected Amount High, 15: Updated Date,
+    // 16: Last QBO JE, 17: Last Payment Date, 18: Last Payment Amount, 19: Last HistoryKey ID,
+    // 20: Fee Collected, 21: Customer Email
+
     const deals = rows.slice(1).map(row => {
-      const rawDeal = {}
-      headers.forEach((header, index) => {
-        rawDeal[header] = row[index] || ''
-      })
-
-      // Map to standardized field names and parse values correctly
-      // Sheet columns: QBO Customer ID, QBO Customer Name, Contract ID, Expected Payment Amount,
-      // Actum Merchant ID, Funded Date, Principal Advanced, Deal ID, Client Name, Principal Collected,
-      // Status, Funded Date, Expected Amount, Expected Amount Low, Expected Amount High, Updated Date,
-      // Last QBO JE, Last Payment Date, Last Payment Amount, Last HistoryKey ID, Fee Collected, Customer Email
-
+      // Use direct index access to handle duplicate column names
       return {
         // IDs
-        qbo_customer_id: rawDeal.qbo_customer_id || '',
-        deal_id: rawDeal.deal_id || '',
-        contract_id: rawDeal.contract_id || '',
-        actum_merchant_id: rawDeal.actum_merchant_id || '',
-
-        // Names
-        qbo_customer_name: rawDeal.qbo_customer_name || rawDeal.client_name || '',
-        client_name: rawDeal.client_name || rawDeal.qbo_customer_name || '',
+        qbo_customer_id: row[0] || '',
+        qbo_customer_name: row[1] || row[8] || '', // Column 1 or 8 (Client Name)
+        contract_id: row[2] || '',
+        actum_merchant_id: row[4] || '',
+        deal_id: row[7] || '',
+        client_name: row[8] || row[1] || '',
 
         // Financial data - parse numbers correctly (remove commas)
-        principal_advanced: parseNumber(rawDeal.principal_advanced),
-        principal_collected: parseNumber(rawDeal.principal_collected),
-        fee_collected: parseNumber(rawDeal.fee_collected),
-        expected_payment_amount: parseNumber(rawDeal.expected_payment_amount),
-        expected_amount: parseNumber(rawDeal.expected_amount),
-        expected_amount_low: parseNumber(rawDeal.expected_amount_low),
-        expected_amount_high: parseNumber(rawDeal.expected_amount_high),
-        last_payment_amount: parseNumber(rawDeal.last_payment_amount),
-        last_qbo_je: parseNumber(rawDeal.last_qbo_je),
+        expected_payment_amount: parseNumber(row[3]),
+        principal_advanced: parseNumber(row[6]),
+        principal_collected: parseNumber(row[9]),
+        expected_amount: parseNumber(row[12]),
+        expected_amount_low: parseNumber(row[13]),
+        expected_amount_high: parseNumber(row[14]),
+        last_qbo_je: parseNumber(row[16]),
+        last_payment_amount: parseNumber(row[18]),
+        fee_collected: parseNumber(row[20]),
 
         // Status
-        status: rawDeal.status || 'Active',
+        status: row[10] || 'Active',
 
-        // Dates - use funded_date column, map to date_funded for compatibility
-        date_funded: rawDeal.funded_date || '',
-        funded_date: rawDeal.funded_date || '',
-        updated_date: rawDeal.updated_date || '',
-        last_payment_date: rawDeal.last_payment_date || '',
+        // Dates - use column 5 (first Funded Date which has actual date!)
+        date_funded: row[5] || '', // Column 5 has "JAN 13, 2026 02:01PM"
+        funded_date: row[5] || '',
+        updated_date: row[15] || '',
+        last_payment_date: row[17] || '',
 
         // Other
-        customer_email: rawDeal.customer_email || '',
-        last_historykey_id: rawDeal.last_historykey_id || '',
+        last_historykey_id: row[19] || '',
+        customer_email: row[21] || '',
 
         // For compatibility with existing code
         type: 'New', // Default type
@@ -154,49 +150,52 @@ export const fetchPayoutEvents = async () => {
 
     console.log('Payout Events headers:', headers)
 
-    // Convert rows to objects with proper data mapping
-    // Sheet columns: History KeyID, Order ID, SubID, Consumer Unique ID, Client Name, Amount,
-    // Principal Applied, Fee Applied, Transaction Date, Processed Date, QBO Principal JE,
-    // QBO Fee JE, Match Method, Auth Code, Error
+    // Convert rows to objects with proper data mapping using direct index access
+    // Sheet columns by INDEX (0-based):
+    // 0: History KeyID, 1: Order ID, 2: SubID, 3: Consumer Unique ID, 4: Client Name,
+    // 5: Amount, 6: Principal Applied, 7: Fee Applied, 8: Transaction Date, 9: Processed Date,
+    // 10: QBO Principal JE, 11: QBO Fee JE, 12: Match Method, 13: Auth Code, 14: Error
     const events = rows.slice(1).map(row => {
-      const rawEvent = {}
-      headers.forEach((header, index) => {
-        rawEvent[header] = row[index] || ''
-      })
+      const clientName = row[4] || ''
+      const amount = parseNumber(row[5])
+      const principalApplied = parseNumber(row[6])
+      const feeApplied = parseNumber(row[7])
+      const transactionDate = row[8] || ''
+      const matchMethod = row[12] || ''
 
       return {
         // IDs
-        history_keyid: rawEvent.history_keyid || '',
-        order_id: rawEvent.order_id || '',
-        sub_id: rawEvent.subid || '',
-        consumer_unique_id: rawEvent.consumer_unique_id || '',
+        history_keyid: row[0] || '',
+        order_id: row[1] || '',
+        sub_id: row[2] || '',
+        consumer_unique_id: row[3] || '',
 
         // Client name - used to match with deals
-        client_name: rawEvent.client_name || '',
+        client_name: clientName,
 
         // Financial data - parse numbers correctly
-        amount: parseNumber(rawEvent.amount),
-        principal_applied: parseNumber(rawEvent.principal_applied),
-        fee_applied: parseNumber(rawEvent.fee_applied),
-        qbo_principal_je: parseNumber(rawEvent.qbo_principal_je),
-        qbo_fee_je: parseNumber(rawEvent.qbo_fee_je),
+        amount: amount,
+        principal_applied: principalApplied,
+        fee_applied: feeApplied,
+        qbo_principal_je: parseNumber(row[10]),
+        qbo_fee_je: parseNumber(row[11]),
 
         // Dates
-        transaction_date: rawEvent.transaction_date || '',
-        processed_date: rawEvent.processed_date || '',
+        transaction_date: transactionDate,
+        processed_date: row[9] || '',
 
         // Other
-        match_method: rawEvent.match_method || '',
-        auth_code: rawEvent.auth_code || '',
-        error: rawEvent.error || '',
+        match_method: matchMethod,
+        auth_code: row[13] || '',
+        error: row[14] || '',
 
         // For Ledger compatibility
-        date: rawEvent.transaction_date || '',
-        type: parseNumber(rawEvent.amount) >= 0 ? 'Credit' : 'Debit',
-        client: rawEvent.client_name || '',
-        principalApplied: parseNumber(rawEvent.principal_applied),
-        feeApplied: parseNumber(rawEvent.fee_applied),
-        description: `Payment - ${rawEvent.match_method || 'Direct'}`
+        date: transactionDate,
+        type: amount >= 0 ? 'Credit' : 'Debit',
+        client: clientName,
+        principalApplied: principalApplied,
+        feeApplied: feeApplied,
+        description: `Payment - ${matchMethod || 'Direct'}`
       }
     })
 

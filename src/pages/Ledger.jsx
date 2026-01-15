@@ -4,25 +4,28 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
 import LedgerTable from '../components/ledger/LedgerTable'
 import LedgerFilters from '../components/ledger/LedgerFilters'
-import { formatCurrency } from '../utils/calculations'
+import { formatCurrency, formatDate } from '../utils/calculations'
 
 const Ledger = () => {
   const { payoutEvents, stats, loading, error, refetch } = useData()
   const [accountType, setAccountType] = useState('available')
   const [dateRange, setDateRange] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
 
   // Transform payout events into ledger transactions
   const transactions = useMemo(() => {
     return payoutEvents
       .map((event, index) => ({
-        id: event.history_key_id || index,
+        id: event.history_keyid || index,
         date: event.transaction_date,
         type: 'Credit',
-        amount: parseFloat(event.amount) || 0,
+        amount: event.amount || 0,
         description: `Syndication Payout - ${event.client_name}`,
         client: event.client_name,
-        principalApplied: parseFloat(event.principal_applied) || 0,
-        feeApplied: parseFloat(event.fee_applied) || 0
+        principalApplied: event.principal_applied || 0,
+        feeApplied: event.fee_applied || 0,
+        matchMethod: event.match_method || '',
+        error: event.error || ''
       }))
       .sort((a, b) => new Date(b.date) - new Date(a.date))
   }, [payoutEvents])
@@ -38,6 +41,14 @@ const Ledger = () => {
 
   const filteredTransactions = useMemo(() => {
     let filtered = transactionsWithBalance
+
+    // Apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim()
+      filtered = filtered.filter(t =>
+        t.client?.toLowerCase().includes(query)
+      )
+    }
 
     // Apply date range filter
     if (dateRange !== 'all') {
@@ -64,7 +75,49 @@ const Ledger = () => {
     }
 
     return filtered
-  }, [transactionsWithBalance, dateRange])
+  }, [transactionsWithBalance, dateRange, searchQuery])
+
+  // Export to CSV function
+  const handleExport = () => {
+    const headers = ['Date', 'Client', 'Type', 'Principal Applied', 'Fee Applied', 'Amount', 'Balance']
+    const csvContent = [
+      headers.join(','),
+      ...filteredTransactions.map(t => [
+        formatDate(t.date),
+        `"${t.client}"`,
+        t.type,
+        t.principalApplied,
+        t.feeApplied,
+        t.amount,
+        t.balance
+      ].join(','))
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `ledger_export_${new Date().toISOString().split('T')[0]}.csv`
+    link.click()
+  }
+
+  // Save Report function
+  const handleSaveReport = () => {
+    const reportData = {
+      name: `Ledger Report - ${new Date().toLocaleDateString()}`,
+      dateRange,
+      searchQuery,
+      transactionCount: filteredTransactions.length,
+      totalAmount: filteredTransactions.reduce((sum, t) => sum + t.amount, 0),
+      generatedAt: new Date().toISOString()
+    }
+
+    // Save to localStorage
+    const savedReports = JSON.parse(localStorage.getItem('ledgerReports') || '[]')
+    savedReports.push(reportData)
+    localStorage.setItem('ledgerReports', JSON.stringify(savedReports))
+
+    alert('Report saved successfully!')
+  }
 
   if (loading) {
     return <LoadingSpinner text="Loading ledger data..." />
@@ -145,8 +198,12 @@ const Ledger = () => {
       <LedgerFilters
         dateRange={dateRange}
         onDateRangeChange={setDateRange}
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
         totalCount={transactionsWithBalance.length}
         filteredCount={filteredTransactions.length}
+        onExport={handleExport}
+        onSaveReport={handleSaveReport}
       />
 
       <LedgerTable transactions={filteredTransactions} />

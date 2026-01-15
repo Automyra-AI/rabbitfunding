@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, TrendingUp, BookOpen, X, ChevronRight } from 'lucide-react'
+import { LayoutDashboard, TrendingUp, BookOpen, X, ChevronRight, Rabbit } from 'lucide-react'
 
 const Sidebar = ({ open, onClose }) => {
   const navItems = [
@@ -36,21 +36,19 @@ const Sidebar = ({ open, onClose }) => {
       {/* Sidebar */}
       <aside
         className={`
-          fixed lg:sticky top-0 left-0 z-40 h-screen w-72 bg-gradient-to-b from-white to-gray-50 border-r-2 border-gray-200 shadow-xl
+          fixed lg:relative lg:flex-shrink-0 top-0 left-0 z-40 h-full w-72 bg-gradient-to-b from-white to-gray-50 border-r-2 border-gray-200 shadow-xl
           transform transition-all duration-300 ease-in-out
           ${open ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
         <div className="flex flex-col h-full">
           {/* Close button (mobile only) */}
-          <div className="flex items-center justify-between p-6 lg:hidden border-b-2 border-gray-200 bg-gradient-to-r from-primary/5 to-transparent">
+          <div className="flex items-center justify-between p-6 lg:hidden border-b-2 border-gray-200 bg-gradient-to-r from-orange-50 to-transparent">
             <div className="flex items-center space-x-2">
-              <div className="p-2 bg-primary rounded-lg">
-                <svg className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
+              <div className="p-2 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg">
+                <Rabbit className="h-5 w-5 text-white" />
               </div>
-              <span className="text-lg font-bold text-gray-900">Navigation</span>
+              <span className="text-lg font-bold text-gray-900">RabbitFunding</span>
             </div>
             <button
               onClick={onClose}
@@ -63,10 +61,8 @@ const Sidebar = ({ open, onClose }) => {
           {/* Brand Section (Desktop) */}
           <div className="hidden lg:block p-6 border-b-2 border-gray-200">
             <div className="flex items-center space-x-3">
-              <div className="p-2.5 bg-gradient-to-br from-primary to-primary-dark rounded-xl shadow-lg">
-                <svg className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
+              <div className="p-2.5 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg">
+                <Rabbit className="h-6 w-6 text-white" />
               </div>
               <div>
                 <h2 className="text-sm font-bold text-gray-900">Navigation</h2>
@@ -77,19 +73,18 @@ const Sidebar = ({ open, onClose }) => {
 
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-            {navItems.map((item, index) => (
+            {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 onClick={onClose}
                 className={({ isActive }) =>
-                  `group flex items-center justify-between px-4 py-4 rounded-xl transition-all duration-200 ${
+                  `group flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-200 ${
                     isActive
-                      ? 'bg-gradient-to-r from-primary to-primary-dark text-white shadow-lg shadow-primary/30 scale-105'
-                      : 'text-gray-700 hover:bg-gradient-to-r hover:from-gray-100 hover:to-gray-50 hover:scale-105'
+                      ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg shadow-orange-500/30'
+                      : 'text-gray-700 hover:bg-orange-50'
                   }`
                 }
-                style={{ animationDelay: `${index * 50}ms` }}
               >
                 {({ isActive }) => (
                   <>
@@ -97,7 +92,7 @@ const Sidebar = ({ open, onClose }) => {
                       <div className={`p-2 rounded-lg transition-all duration-200 ${
                         isActive
                           ? 'bg-white/20'
-                          : 'bg-gray-200 group-hover:bg-primary/10'
+                          : 'bg-gray-200 group-hover:bg-orange-100'
                       }`}>
                         <item.icon className="h-5 w-5" />
                       </div>
@@ -108,7 +103,7 @@ const Sidebar = ({ open, onClose }) => {
                         </span>
                       </div>
                     </div>
-                    <ChevronRight className={`h-5 w-5 transition-transform duration-200 ${
+                    <ChevronRight className={`h-5 w-5 flex-shrink-0 transition-transform duration-200 ${
                       isActive ? 'translate-x-1' : 'opacity-0 group-hover:opacity-100 group-hover:translate-x-1'
                     }`} />
                   </>
