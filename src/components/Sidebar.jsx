@@ -116,7 +116,7 @@ const Sidebar = ({ open, onClose }) => {
           <div className="p-6 border-t-2 border-gray-200 bg-gradient-to-r from-gray-50 to-transparent">
             <div className="text-center space-y-2">
               <div className="inline-flex items-center space-x-2 px-3 py-2 bg-white rounded-lg border border-gray-200 shadow-sm">
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
                 <span className="text-xs font-semibold text-gray-700">System Online</span>
               </div>
               <p className="text-xs text-gray-500">

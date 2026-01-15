@@ -34,14 +34,14 @@ const LedgerTable = ({ transactions }) => {
                 <td>
                   <div className="flex items-center space-x-2">
                     {transaction.type === 'Credit' ? (
-                      <ArrowDownCircle className="h-4 w-4 text-green-600" />
+                      <ArrowDownCircle className="h-4 w-4 text-orange-600" />
                     ) : (
                       <ArrowUpCircle className="h-4 w-4 text-red-600" />
                     )}
                     <span
                       className={
                         transaction.type === 'Credit'
-                          ? 'text-green-600 font-medium'
+                          ? 'text-orange-600 font-medium'
                           : 'text-red-600 font-medium'
                       }
                     >
@@ -54,7 +54,7 @@ const LedgerTable = ({ transactions }) => {
                 <td className="text-sm">{formatCurrency(transaction.feeApplied)}</td>
                 <td
                   className={`font-medium ${
-                    transaction.type === 'Credit' ? 'text-green-600' : 'text-red-600'
+                    transaction.type === 'Credit' ? 'text-orange-600' : 'text-red-600'
                   }`}
                 >
                   {transaction.type === 'Credit' ? '+' : '-'}

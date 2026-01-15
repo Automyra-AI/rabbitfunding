@@ -11,9 +11,9 @@ const PerformanceStatsCard = ({ stats }) => {
       value: formatCurrency(stats.syndicatedAmount),
       highlight: false,
       icon: TrendingUp,
-      color: 'text-blue-700',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
+      color: 'text-orange-700',
+      bgColor: 'bg-orange-50',
+      borderColor: 'border-orange-200',
       description: 'Total principal advanced'
     },
     {
@@ -31,9 +31,9 @@ const PerformanceStatsCard = ({ stats }) => {
       value: `${formatNumber(stats.activeDeals)} / ${formatNumber(stats.totalDeals)}`,
       highlight: false,
       icon: Users,
-      color: 'text-green-700',
-      bgColor: 'bg-green-50',
-      borderColor: 'border-green-200',
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      borderColor: 'border-orange-200',
       description: 'Currently active / Total deals'
     },
     {
@@ -41,9 +41,9 @@ const PerformanceStatsCard = ({ stats }) => {
       value: formatCurrency(stats.totalCAFs),
       highlight: false,
       icon: Award,
-      color: 'text-emerald-700',
-      bgColor: 'bg-emerald-50',
-      borderColor: 'border-emerald-200',
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-50',
+      borderColor: 'border-amber-200',
       description: 'Total fees earned'
     },
     {
@@ -51,9 +51,9 @@ const PerformanceStatsCard = ({ stats }) => {
       value: formatCurrency(stats.paidBack),
       highlight: false,
       icon: CheckCircle,
-      color: 'text-violet-700',
-      bgColor: 'bg-violet-50',
-      borderColor: 'border-violet-200',
+      color: 'text-orange-700',
+      bgColor: 'bg-orange-50',
+      borderColor: 'border-orange-300',
       description: 'Principal + fees collected'
     },
     {
@@ -71,9 +71,9 @@ const PerformanceStatsCard = ({ stats }) => {
       value: formatNumber(stats.totalPayments),
       highlight: false,
       icon: CreditCard,
-      color: 'text-rose-700',
-      bgColor: 'bg-rose-50',
-      borderColor: 'border-rose-200',
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      borderColor: 'border-orange-200',
       description: 'Total payout events processed'
     },
   ]

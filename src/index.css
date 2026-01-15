@@ -4,7 +4,8 @@
 
 @layer base {
   body {
-    @apply bg-background text-gray-900;
+    @apply text-gray-900;
+    background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -13,7 +14,8 @@
 
 @layer components {
   .card {
-    @apply bg-white rounded-xl shadow-md border border-gray-200 p-6;
+    @apply rounded-xl shadow-md border border-gray-200 p-6;
+    background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
   }
 
   .stat-value {
@@ -29,7 +31,7 @@
   }
 
   .badge-active {
-    @apply bg-gradient-to-r from-green-400 to-green-600 text-white;
+    @apply bg-gradient-to-r from-orange-400 to-orange-600 text-white;
   }
 
   .badge-closed {
@@ -37,11 +39,11 @@
   }
 
   .btn-primary {
-    @apply bg-gradient-to-r from-primary to-primary-dark hover:shadow-lg text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-200 hover:scale-105;
+    @apply bg-gradient-to-r from-orange-500 to-orange-600 hover:shadow-lg hover:shadow-orange-500/30 text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-200 hover:scale-105;
   }
 
   .btn-secondary {
-    @apply bg-white hover:bg-gray-50 text-gray-700 font-semibold px-5 py-2.5 rounded-xl border-2 border-gray-300 hover:border-gray-400 transition-all duration-200 hover:scale-105 shadow-sm;
+    @apply bg-white hover:bg-orange-50 text-gray-700 font-semibold px-5 py-2.5 rounded-xl border-2 border-gray-300 hover:border-orange-400 transition-all duration-200 hover:scale-105 shadow-sm;
   }
 
   .progress-bar {
@@ -53,7 +55,7 @@
   }
 
   .progress-bar-fill-complete {
-    @apply bg-gradient-to-r from-green-400 via-green-500 to-green-600 shadow-lg;
+    @apply bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 shadow-lg;
   }
 
   .progress-bar-fill-partial {
@@ -153,7 +155,7 @@
 }
 
 .data-table tbody tr {
-  @apply border-b border-gray-100 hover:bg-blue-50/30 transition-all duration-150;
+  @apply border-b border-gray-100 hover:bg-orange-50/30 transition-all duration-150;
 }
 
 .data-table tbody tr:last-child {
@@ -161,7 +163,7 @@
 }
 
 .data-table tbody tr:hover {
-  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(249, 115, 22, 0.1);
 }
 
 .data-table td {

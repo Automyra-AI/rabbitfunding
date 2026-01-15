@@ -32,7 +32,7 @@ const Dashboard = () => {
           </div>
           {lastUpdated && (
             <div className="flex items-center space-x-2 px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-200">
-              <Activity className="h-4 w-4 text-green-600 animate-pulse" />
+              <Activity className="h-4 w-4 text-orange-600 animate-pulse" />
               <div className="text-right">
                 <p className="text-xs text-gray-500">Live Data</p>
                 <p className="text-xs font-semibold text-gray-700">

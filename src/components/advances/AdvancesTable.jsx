@@ -270,7 +270,7 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
                   </td>
                 )}
                 {visibleColumns.outstanding && (
-                  <td className={deal.outstanding > 0 ? 'text-red-600 font-medium' : 'text-green-600 font-medium'}>
+                  <td className={deal.outstanding > 0 ? 'text-red-600 font-medium' : 'text-orange-600 font-medium'}>
                     {formatCurrency(deal.outstanding)}
                   </td>
                 )}

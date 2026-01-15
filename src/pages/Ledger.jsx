@@ -132,10 +132,10 @@ const Ledger = () => {
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-transparent rounded-2xl p-6 border border-emerald-200">
+      <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-transparent rounded-2xl p-6 border border-orange-200">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center space-x-4">
-            <div className="p-3 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-xl shadow-lg">
+            <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg">
               <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
@@ -150,7 +150,7 @@ const Ledger = () => {
           <div className="px-4 py-3 bg-white rounded-xl shadow-sm border border-gray-200">
             <div>
               <p className="text-xs text-gray-500">Total Transactions</p>
-              <p className="text-lg font-bold text-emerald-600">{filteredTransactions.length}</p>
+              <p className="text-lg font-bold text-orange-600">{filteredTransactions.length}</p>
             </div>
           </div>
         </div>

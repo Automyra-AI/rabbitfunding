@@ -6,31 +6,31 @@ const BalanceCard = ({ stats }) => {
     {
       label: 'Principal Collected',
       value: stats.available,
-      color: 'text-green-600',
-      bgColor: 'bg-green-50',
-      borderColor: 'border-green-200',
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      borderColor: 'border-orange-200',
       icon: DollarSign,
-      iconColor: 'text-green-600',
+      iconColor: 'text-orange-600',
       description: 'Money returned from deals'
     },
     {
       label: 'Deployed Capital',
       value: stats.deployed,
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50',
-      borderColor: 'border-blue-200',
+      color: 'text-orange-700',
+      bgColor: 'bg-orange-50',
+      borderColor: 'border-orange-300',
       icon: Wallet,
-      iconColor: 'text-blue-600',
+      iconColor: 'text-orange-700',
       description: 'Outstanding principal'
     },
     {
       label: 'Fees Collected',
       value: stats.reserve,
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50',
-      borderColor: 'border-purple-200',
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-50',
+      borderColor: 'border-amber-200',
       icon: PiggyBank,
-      iconColor: 'text-purple-600',
+      iconColor: 'text-amber-600',
       description: 'Total CAFs earned'
     },
     {

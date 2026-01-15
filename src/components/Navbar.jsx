@@ -39,8 +39,8 @@ const Navbar = ({ onMenuClick }) => {
           {/* Right side */}
           <div className="flex items-center space-x-3">
             {lastUpdated && (
-              <div className="hidden md:flex items-center space-x-2 px-3 py-2 bg-green-50 rounded-xl border border-green-200">
-                <Activity className="h-4 w-4 text-green-600 animate-pulse" />
+              <div className="hidden md:flex items-center space-x-2 px-3 py-2 bg-orange-50 rounded-xl border border-orange-200">
+                <Activity className="h-4 w-4 text-orange-600 animate-pulse" />
                 <div className="text-xs">
                   <p className="text-gray-500">Live</p>
                   <p className="font-semibold text-gray-700">
@@ -69,7 +69,7 @@ const Navbar = ({ onMenuClick }) => {
 
             <div className="relative">
               <button className="flex items-center space-x-2 px-4 py-2.5 rounded-xl hover:bg-gray-100 transition-all duration-200">
-                <div className="p-1.5 bg-gradient-to-br from-blue-500 to-purple-500 rounded-lg">
+                <div className="p-1.5 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg">
                   <User className="h-4 w-4 text-white" />
                 </div>
                 <span className="hidden sm:inline text-sm font-semibold text-gray-700">Admin</span>

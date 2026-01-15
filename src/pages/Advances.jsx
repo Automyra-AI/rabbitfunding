@@ -86,10 +86,10 @@ const Advances = () => {
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-50 via-indigo-50 to-transparent rounded-2xl p-6 border border-blue-200">
+      <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-transparent rounded-2xl p-6 border border-orange-200">
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center space-x-4">
-            <div className="p-3 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl shadow-lg">
+            <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg">
               <Briefcase className="h-8 w-8 text-white" />
             </div>
             <div>
@@ -102,7 +102,7 @@ const Advances = () => {
           <div className="flex items-center space-x-4">
             <div className="px-4 py-3 bg-white rounded-xl shadow-sm border border-gray-200">
               <div className="flex items-center space-x-2">
-                <TrendingUp className="h-5 w-5 text-green-600" />
+                <TrendingUp className="h-5 w-5 text-orange-600" />
                 <div>
                   <p className="text-xs text-gray-500">Active Deals</p>
                   <p className="text-lg font-bold text-gray-900">{quickStats.activeDeals}</p>
@@ -112,7 +112,7 @@ const Advances = () => {
             <div className="px-4 py-3 bg-white rounded-xl shadow-sm border border-gray-200">
               <div>
                 <p className="text-xs text-gray-500">Total Value</p>
-                <p className="text-lg font-bold text-blue-600">{formatCurrency(quickStats.totalValue)}</p>
+                <p className="text-lg font-bold text-orange-600">{formatCurrency(quickStats.totalValue)}</p>
               </div>
             </div>
           </div>
