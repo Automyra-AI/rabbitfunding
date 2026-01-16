@@ -58,19 +58,6 @@ const Sidebar = ({ open, onClose }) => {
             </button>
           </div>
 
-          {/* Brand Section (Desktop) */}
-          <div className="hidden lg:block p-6 border-b-2 border-gray-200">
-            <div className="flex items-center space-x-3">
-              <div className="p-2.5 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg">
-                <Rabbit className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-gray-900">Navigation</h2>
-                <p className="text-xs text-gray-500">Quick Access</p>
-              </div>
-            </div>
-          </div>
-
           {/* Navigation */}
           <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
             {navItems.map((item) => (

@@ -1,0 +1,53 @@
+{
+  "range": "'💼 Deals'!A1:Z1005",
+  "majorDimension": "ROWS",
+  "values": [
+    [
+      "QBO Customer ID",
+      "QBO Customer Name",
+      "Contract ID",
+      "Expected Payment Amount",
+      "Actum Merchant ID",
+      "Funded Date",
+      "Principal Advanced",
+      "Deal ID",
+      "Client Name",
+      "Principal Collected",
+      "Status",
+      "Funded Date",
+      "Expected Amount",
+      "Expected Amount Low",
+      "Expected Amount High",
+      "Updated Date",
+      "Last QBO JE",
+      "Last Payment Date",
+      "Last Payment Amount",
+      "Last HistoryKey ID",
+      "Fee Collected",
+      "Customer Email"
+    ],
+    [
+      "589",
+      "CENTRAL TEXAS COMMERCIAL BUILDERS",
+      "",
+      "20000",
+      "dODSEr1MhHjr2OAr7aL74fh8hb.t.UtN",
+      "JAN 13, 2026 02:01PM",
+      "20000",
+      "",
+      "CENTRAL TEXAS COMMERCIAL BUILDERS",
+      "5,700",
+      "Active",
+      "",
+      "15500",
+      "",
+      "",
+      "2026-01-15 05:00:55",
+      "",
+      "JAN 14, 2026 02:01PM",
+      "300",
+      "136269464",
+      "0"
+    ]
+  ]
+}

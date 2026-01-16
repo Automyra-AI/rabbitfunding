@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight, ArrowDownCircle, ArrowUpCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { formatCurrency, formatDate } from '../../utils/calculations'
 
 const ITEMS_PER_PAGE = 50
@@ -17,51 +17,29 @@ const LedgerTable = ({ transactions }) => {
         <table className="data-table">
           <thead>
             <tr>
+              <th>History Key ID</th>
               <th>Date</th>
-              <th>Type</th>
               <th>Client</th>
-              <th>Principal</th>
-              <th>Fee</th>
               <th>Amount</th>
-              <th>Balance</th>
-              <th>Description</th>
+              <th>Principal Applied</th>
+              <th>Fee Applied</th>
+              <th>Match Method</th>
+              <th>Error</th>
             </tr>
           </thead>
           <tbody>
             {paginatedTransactions.map((transaction) => (
               <tr key={transaction.id}>
+                <td className="text-sm font-mono">{transaction.history_keyid || '-'}</td>
                 <td className="font-medium">{formatDate(transaction.date)}</td>
-                <td>
-                  <div className="flex items-center space-x-2">
-                    {transaction.type === 'Credit' ? (
-                      <ArrowDownCircle className="h-4 w-4 text-orange-600" />
-                    ) : (
-                      <ArrowUpCircle className="h-4 w-4 text-red-600" />
-                    )}
-                    <span
-                      className={
-                        transaction.type === 'Credit'
-                          ? 'text-orange-600 font-medium'
-                          : 'text-red-600 font-medium'
-                      }
-                    >
-                      {transaction.type}
-                    </span>
-                  </div>
-                </td>
                 <td className="text-sm">{transaction.client}</td>
-                <td className="text-sm">{formatCurrency(transaction.principalApplied)}</td>
-                <td className="text-sm">{formatCurrency(transaction.feeApplied)}</td>
-                <td
-                  className={`font-medium ${
-                    transaction.type === 'Credit' ? 'text-orange-600' : 'text-red-600'
-                  }`}
-                >
-                  {transaction.type === 'Credit' ? '+' : '-'}
+                <td className="font-medium text-orange-600">
                   {formatCurrency(transaction.amount)}
                 </td>
-                <td className="font-semibold">{formatCurrency(transaction.balance)}</td>
+                <td className="text-sm">{formatCurrency(transaction.principalApplied)}</td>
+                <td className="text-sm">{formatCurrency(transaction.feeApplied)}</td>
                 <td className="text-sm text-gray-600">{transaction.description}</td>
+                <td className="text-sm text-red-600">{transaction.error || '-'}</td>
               </tr>
             ))}
 

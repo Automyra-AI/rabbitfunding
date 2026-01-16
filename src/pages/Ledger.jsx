@@ -16,11 +16,12 @@ const Ledger = () => {
   const transactions = useMemo(() => {
     return payoutEvents
       .map((event, index) => ({
-        id: event.history_keyid || index,
+        id: index + 1,
+        history_keyid: event.history_keyid || '',
         date: event.transaction_date,
         type: 'Credit',
         amount: event.amount || 0,
-        description: `Syndication Payout - ${event.client_name}`,
+        description: event.match_method || 'Payment',
         client: event.client_name,
         principalApplied: event.principal_applied || 0,
         feeApplied: event.fee_applied || 0,

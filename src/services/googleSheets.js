@@ -51,54 +51,45 @@ export const fetchDealsData = async () => {
 
     console.log('Sheet headers:', headers)
 
-    // Convert rows to objects with proper data mapping
+    // Convert rows to objects - exact values from sheet, no calculations
     // Sheet columns by INDEX (0-based):
     // 0: QBO Customer ID, 1: QBO Customer Name, 2: Contract ID, 3: Expected Payment Amount,
-    // 4: Actum Merchant ID, 5: Funded Date (FIRST ONE - has actual date!), 6: Principal Advanced,
-    // 7: Deal ID, 8: Client Name, 9: Principal Collected, 10: Status, 11: Funded Date (duplicate - empty),
+    // 4: Actum Merchant ID, 5: Funded Date, 6: Principal Advanced,
+    // 7: Deal ID, 8: Client Name, 9: Principal Collected, 10: Status, 11: Funded Date (duplicate),
     // 12: Expected Amount, 13: Expected Amount Low, 14: Expected Amount High, 15: Updated Date,
     // 16: Last QBO JE, 17: Last Payment Date, 18: Last Payment Amount, 19: Last HistoryKey ID,
     // 20: Fee Collected, 21: Customer Email
 
-    const deals = rows.slice(1).map(row => {
-      // Use direct index access to handle duplicate column names
+    const deals = rows.slice(1).map((row, index) => {
       return {
-        // IDs
-        qbo_customer_id: row[0] || '',
-        qbo_customer_name: row[1] || row[8] || '', // Column 1 or 8 (Client Name)
-        contract_id: row[2] || '',
-        actum_merchant_id: row[4] || '',
-        deal_id: row[7] || '',
-        client_name: row[8] || row[1] || '',
+        // Unique ID
+        id: index + 1,
 
-        // Financial data - parse numbers correctly (remove commas)
+        // Exact values from sheet columns
+        qbo_customer_id: row[0] || '',
+        qbo_customer_name: row[1] || '',
+        contract_id: row[2] || '',
         expected_payment_amount: parseNumber(row[3]),
+        actum_merchant_id: row[4] || '',
+        funded_date: row[5] || '',
         principal_advanced: parseNumber(row[6]),
+        deal_id: row[7] || '',
+        client_name: row[8] || '',
         principal_collected: parseNumber(row[9]),
+        status: row[10] || '',
         expected_amount: parseNumber(row[12]),
         expected_amount_low: parseNumber(row[13]),
         expected_amount_high: parseNumber(row[14]),
-        last_qbo_je: parseNumber(row[16]),
-        last_payment_amount: parseNumber(row[18]),
-        fee_collected: parseNumber(row[20]),
-
-        // Status
-        status: row[10] || 'Active',
-
-        // Dates - use column 5 (first Funded Date which has actual date!)
-        date_funded: row[5] || '', // Column 5 has "JAN 13, 2026 02:01PM"
-        funded_date: row[5] || '',
         updated_date: row[15] || '',
+        last_qbo_je: row[16] || '',
         last_payment_date: row[17] || '',
-
-        // Other
+        last_payment_amount: parseNumber(row[18]),
         last_historykey_id: row[19] || '',
+        fee_collected: parseNumber(row[20]),
         customer_email: row[21] || '',
 
-        // For compatibility with existing code
-        type: 'New', // Default type
-        syndication_percentage: 100, // Default 100%
-        factor_rate: '' // Not in sheet
+        // For table display
+        date_funded: row[5] || ''
       }
     })
 
@@ -150,52 +141,40 @@ export const fetchPayoutEvents = async () => {
 
     console.log('Payout Events headers:', headers)
 
-    // Convert rows to objects with proper data mapping using direct index access
+    // Convert rows to objects - exact values from sheet, no calculations
     // Sheet columns by INDEX (0-based):
     // 0: History KeyID, 1: Order ID, 2: SubID, 3: Consumer Unique ID, 4: Client Name,
     // 5: Amount, 6: Principal Applied, 7: Fee Applied, 8: Transaction Date, 9: Processed Date,
     // 10: QBO Principal JE, 11: QBO Fee JE, 12: Match Method, 13: Auth Code, 14: Error
-    const events = rows.slice(1).map(row => {
-      const clientName = row[4] || ''
-      const amount = parseNumber(row[5])
-      const principalApplied = parseNumber(row[6])
-      const feeApplied = parseNumber(row[7])
-      const transactionDate = row[8] || ''
-      const matchMethod = row[12] || ''
-
+    const events = rows.slice(1).map((row, index) => {
       return {
-        // IDs
+        // Unique ID for React key
+        id: index + 1,
+
+        // Exact values from sheet columns
         history_keyid: row[0] || '',
         order_id: row[1] || '',
         sub_id: row[2] || '',
         consumer_unique_id: row[3] || '',
-
-        // Client name - used to match with deals
-        client_name: clientName,
-
-        // Financial data - parse numbers correctly
-        amount: amount,
-        principal_applied: principalApplied,
-        fee_applied: feeApplied,
-        qbo_principal_je: parseNumber(row[10]),
-        qbo_fee_je: parseNumber(row[11]),
-
-        // Dates
-        transaction_date: transactionDate,
+        client_name: row[4] || '',
+        amount: parseNumber(row[5]),
+        principal_applied: parseNumber(row[6]),
+        fee_applied: parseNumber(row[7]),
+        transaction_date: row[8] || '',
         processed_date: row[9] || '',
-
-        // Other
-        match_method: matchMethod,
+        qbo_principal_je: row[10] || '',
+        qbo_fee_je: row[11] || '',
+        match_method: row[12] || '',
         auth_code: row[13] || '',
         error: row[14] || '',
 
-        // For Ledger compatibility
-        date: transactionDate,
-        type: amount >= 0 ? 'Credit' : 'Debit',
-        client: clientName,
-        principalApplied: principalApplied,
-        feeApplied: feeApplied,
-        description: `Payment - ${matchMethod || 'Direct'}`
+        // For Ledger table display - exact values
+        date: row[8] || '',
+        type: 'Credit',
+        client: row[4] || '',
+        principalApplied: parseNumber(row[6]),
+        feeApplied: parseNumber(row[7]),
+        description: row[12] || 'Payment'
       }
     })
 

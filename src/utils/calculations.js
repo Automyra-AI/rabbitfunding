@@ -16,63 +16,52 @@ export const calculateStats = (deals, payoutEvents) => {
       activeDeals: 0,
       totalDeals: 0,
       avgPaidBackPercent: 0,
-      totalPayments: 0
+      totalPayments: 0,
+      expectedAmount: 0,
+      expectedPaymentAmount: 0
     }
   }
 
-  // Financial calculations - data is already parsed as numbers from googleSheets.js
-  const syndicatedAmount = deals.reduce((sum, deal) => sum + (deal.principal_advanced || 0), 0)
-  const totalCAFs = deals.reduce((sum, deal) => sum + (deal.fee_collected || 0), 0)
+  // Sum exact values from Deals sheet - no calculations
+  const principalAdvanced = deals.reduce((sum, deal) => sum + (deal.principal_advanced || 0), 0)
   const principalCollected = deals.reduce((sum, deal) => sum + (deal.principal_collected || 0), 0)
-
-  const paidBack = principalCollected + totalCAFs
-  const outstanding = syndicatedAmount - principalCollected
-  const tcp = syndicatedAmount + totalCAFs
-  const netSyndicatedAmount = syndicatedAmount - totalCAFs
+  const feeCollected = deals.reduce((sum, deal) => sum + (deal.fee_collected || 0), 0)
+  const expectedAmount = deals.reduce((sum, deal) => sum + (deal.expected_amount || 0), 0)
+  const expectedPaymentAmount = deals.reduce((sum, deal) => sum + (deal.expected_payment_amount || 0), 0)
 
   // Count active deals
   const activeDeals = deals.filter(deal =>
     deal.status?.toLowerCase() === 'active'
   ).length
 
-  // Calculate average paid back percentage
-  const dealsWithPaidBack = deals.map(deal => {
-    const dealTcp = (deal.principal_advanced || 0) + (deal.fee_collected || 0)
-    const dealPaidBack = (deal.principal_collected || 0) + (deal.fee_collected || 0)
-    return dealTcp > 0 ? (dealPaidBack / dealTcp) * 100 : 0
-  })
-  const avgPaidBackPercent = dealsWithPaidBack.length > 0
-    ? dealsWithPaidBack.reduce((sum, pct) => sum + pct, 0) / dealsWithPaidBack.length
-    : 0
-
   // Total payments from payout events
   const totalPayments = payoutEvents ? payoutEvents.length : 0
 
-  // Capital breakdown (based on outstanding amounts)
-  // Available = Principal collected (money returned)
-  // Deployed = Outstanding principal (money still out)
-  // Reserve = Fees collected
-  const available = principalCollected
-  const deployed = outstanding
-  const reserve = totalCAFs
+  // Calculate paid back percentage based on expected amount
+  const avgPaidBackPercent = expectedPaymentAmount > 0
+    ? (principalCollected / expectedPaymentAmount) * 100
+    : 0
 
   return {
-    available,
-    deployed,
-    reserve,
-    outstandingPurchases: outstanding,
-    syndicatedAmount,
-    netSyndicatedAmount,
-    totalCAFs,
-    tcp,
-    payback: tcp,
-    paidBack,
-    outstanding,
-    outstandingPercentage: syndicatedAmount > 0 ? (outstanding / syndicatedAmount) * 100 : 0,
+    // Exact sums from sheet
+    available: principalCollected,
+    deployed: principalAdvanced - principalCollected,
+    reserve: feeCollected,
+    outstandingPurchases: expectedAmount,
+    syndicatedAmount: principalAdvanced,
+    netSyndicatedAmount: principalAdvanced - feeCollected,
+    totalCAFs: feeCollected,
+    tcp: expectedPaymentAmount,
+    payback: expectedPaymentAmount,
+    paidBack: principalCollected + feeCollected,
+    outstanding: expectedAmount,
+    outstandingPercentage: principalAdvanced > 0 ? ((principalAdvanced - principalCollected) / principalAdvanced) * 100 : 0,
     activeDeals,
     totalDeals: deals.length,
     avgPaidBackPercent,
-    totalPayments
+    totalPayments,
+    expectedAmount,
+    expectedPaymentAmount
   }
 }
 
