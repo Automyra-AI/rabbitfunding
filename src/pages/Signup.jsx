@@ -89,8 +89,8 @@ const Signup = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="w-full max-w-md my-8">
         {/* Logo Section */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl shadow-lg mb-4">
@@ -218,11 +218,12 @@ const Signup = () => {
             )}
 
             {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg hover:from-orange-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-            >
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-semibold rounded-lg hover:from-orange-600 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
               {loading ? (
                 <span className="flex items-center justify-center space-x-2">
                   <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -234,7 +235,8 @@ const Signup = () => {
               ) : (
                 'Request Access'
               )}
-            </button>
+              </button>
+            </div>
           </form>
 
           {/* Login Link */}
