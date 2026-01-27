@@ -14,24 +14,24 @@
 
 @layer components {
   .card {
-    @apply rounded-xl shadow-md border border-gray-200 p-6;
+    @apply rounded-xl shadow-md border border-gray-200 p-4;
     background: linear-gradient(180deg, #ffffff 0%, #fafafa 100%);
   }
 
   .stat-value {
-    @apply text-3xl font-bold text-gray-900;
+    @apply text-xl font-bold text-gray-900;
   }
 
   .stat-label {
-    @apply text-sm font-medium text-gray-600 uppercase tracking-wide;
+    @apply text-xs font-medium text-gray-600 uppercase tracking-wide;
   }
 
   .badge {
-    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold shadow-sm;
+    @apply inline-flex items-center px-1 py-0 rounded-full text-[8px] font-semibold;
   }
 
   .badge-active {
-    @apply bg-gradient-to-r from-orange-400 to-orange-600 text-white;
+    @apply bg-gradient-to-r from-primary to-primary-dark text-white;
   }
 
   .badge-closed {
@@ -39,15 +39,15 @@
   }
 
   .btn-primary {
-    @apply bg-gradient-to-r from-orange-500 to-orange-600 hover:shadow-lg hover:shadow-orange-500/30 text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-200 hover:scale-105;
+    @apply bg-gradient-to-r from-primary to-primary-dark hover:shadow-lg hover:shadow-primary/30 text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-200 hover:scale-105;
   }
 
   .btn-secondary {
-    @apply bg-white hover:bg-orange-50 text-gray-700 font-semibold px-5 py-2.5 rounded-xl border-2 border-gray-300 hover:border-orange-400 transition-all duration-200 hover:scale-105 shadow-sm;
+    @apply bg-white hover:bg-primary/5 text-gray-700 font-semibold px-5 py-2.5 rounded-xl border-2 border-gray-300 hover:border-primary transition-all duration-200 hover:scale-105 shadow-sm;
   }
 
   .progress-bar {
-    @apply h-3 rounded-full overflow-hidden bg-gray-200 shadow-inner;
+    @apply h-1 rounded-full overflow-hidden bg-gray-200;
   }
 
   .progress-bar-fill {
@@ -55,11 +55,11 @@
   }
 
   .progress-bar-fill-complete {
-    @apply bg-gradient-to-r from-orange-400 via-orange-500 to-orange-600 shadow-lg;
+    @apply bg-gradient-to-r from-primary-light via-primary to-primary-dark shadow-lg;
   }
 
   .progress-bar-fill-partial {
-    @apply bg-gradient-to-r from-amber-400 via-orange-500 to-orange-600 shadow-lg;
+    @apply bg-gradient-to-r from-primary-light via-primary to-primary-dark shadow-lg;
   }
 }
 
@@ -128,12 +128,12 @@
 
 /* Table styles */
 .table-container {
-  @apply overflow-x-auto rounded-xl border border-gray-200;
+  @apply overflow-hidden rounded-xl border border-gray-200;
   box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
 }
 
 .data-table {
-  @apply w-full border-collapse;
+  @apply w-full border-collapse table-fixed;
 }
 
 .data-table thead {
@@ -141,8 +141,10 @@
 }
 
 .data-table th {
-  @apply px-5 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-b-2 border-gray-300;
+  @apply px-1 py-1 text-left text-[8px] font-bold text-gray-700 uppercase border-b-2 border-gray-300;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .data-table th.sortable {
@@ -155,7 +157,7 @@
 }
 
 .data-table tbody tr {
-  @apply border-b border-gray-100 hover:bg-orange-50/30 transition-all duration-150;
+  @apply border-b border-gray-100 hover:bg-primary/5 transition-all duration-150;
 }
 
 .data-table tbody tr:last-child {
@@ -167,8 +169,10 @@
 }
 
 .data-table td {
-  @apply px-5 py-4 text-sm text-gray-900;
+  @apply px-1 py-0.5 text-[10px] text-gray-900;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .data-table .total-row {

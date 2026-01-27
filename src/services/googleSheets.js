@@ -52,15 +52,23 @@ export const fetchDealsData = async () => {
     console.log('Sheet headers:', headers)
 
     // Convert rows to objects - exact values from sheet, no calculations
-    // Sheet columns by INDEX (0-based):
-    // 0: QBO Customer ID, 1: QBO Customer Name, 2: Contract ID, 3: Expected Payment Amount,
-    // 4: Actum Merchant ID, 5: Funded Date, 6: Principal Advanced,
+    // Sheet columns by INDEX (0-based) - UPDATED STRUCTURE:
+    // 0: QBO Customer ID, 1: QBO Customer Name, 2: Contract ID, 3: Receivables Purchased Amount,
+    // 4: Actum Merchant ID, 5: Funded Date, 6: Purchase Price,
     // 7: Deal ID, 8: Client Name, 9: Principal Collected, 10: Status, 11: Funded Date (duplicate),
     // 12: Expected Amount, 13: Expected Amount Low, 14: Expected Amount High, 15: Updated Date,
     // 16: Last QBO JE, 17: Last Payment Date, 18: Last Payment Amount, 19: Last HistoryKey ID,
-    // 20: Fee Collected, 21: Customer Email
+    // 20: Fee Collected, 21: Customer Email, 22: Syndicated Amount - Origination
 
     const deals = rows.slice(1).map((row, index) => {
+      // Parse key values for factor rate calculation
+      const receivablesPurchasedAmount = parseNumber(row[3])  // Total Payback amount
+      const purchasePrice = parseNumber(row[6])               // Syndicated Amount (what we funded)
+      const syndicatedAmountOrigination = parseNumber(row[22]) // Syndicated Amount - Origination
+
+      // Calculate Factor Rate = Receivables Purchased Amount / Purchase Price
+      const factorRate = purchasePrice > 0 ? receivablesPurchasedAmount / purchasePrice : 1.536
+
       return {
         // Unique ID
         id: index + 1,
@@ -69,10 +77,11 @@ export const fetchDealsData = async () => {
         qbo_customer_id: row[0] || '',
         qbo_customer_name: row[1] || '',
         contract_id: row[2] || '',
-        expected_payment_amount: parseNumber(row[3]),
+        receivables_purchased_amount: receivablesPurchasedAmount,  // Total Payback
         actum_merchant_id: row[4] || '',
         funded_date: row[5] || '',
-        principal_advanced: parseNumber(row[6]),
+        purchase_price: purchasePrice,                              // Syndicated Amount
+        principal_advanced: purchasePrice,                          // Alias for compatibility
         deal_id: row[7] || '',
         client_name: row[8] || '',
         principal_collected: parseNumber(row[9]),
@@ -87,6 +96,10 @@ export const fetchDealsData = async () => {
         last_historykey_id: row[19] || '',
         fee_collected: parseNumber(row[20]),
         customer_email: row[21] || '',
+        syndicated_amount_origination: syndicatedAmountOrigination,
+
+        // Calculated Factor Rate per deal
+        factor_rate: factorRate,
 
         // For table display
         date_funded: row[5] || ''

@@ -4,7 +4,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
 import AdvancesTable from '../components/advances/AdvancesTable'
 import AdvancesFilters from '../components/advances/AdvancesFilters'
-import { TrendingUp, Briefcase } from 'lucide-react'
+import { Briefcase, TrendingUp } from 'lucide-react'
 import { formatCurrency } from '../utils/calculations'
 
 const Advances = () => {
@@ -15,14 +15,16 @@ const Advances = () => {
   const [visibleColumns, setVisibleColumns] = useState({
     state: true,
     advanceId: true,
-    type: false,
+    type: true,
     syndicated: true,
-    cafs: true,
-    tcp: true,
+    syndicatedOrigination: true,
     factorRate: true,
     payback: true,
     payments: true,
+    paymentPerTransaction: true,
     paidBackPercent: true,
+    totalTransactions: true,
+    remainingTransactions: true,
     outstanding: true,
     dateFunded: true
   })
@@ -30,14 +32,12 @@ const Advances = () => {
   const filteredDeals = useMemo(() => {
     let filtered = deals
 
-    // Filter by status
     if (statusFilter !== 'all') {
       filtered = filtered.filter(deal =>
         deal.status?.toLowerCase() === statusFilter.toLowerCase()
       )
     }
 
-    // Filter by search query (name)
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim()
       filtered = filtered.filter(deal =>
@@ -46,7 +46,6 @@ const Advances = () => {
       )
     }
 
-    // Filter by amount
     if (amountFilter !== 'all') {
       filtered = filtered.filter(deal => {
         const amount = deal.principal_advanced || 0
@@ -68,11 +67,23 @@ const Advances = () => {
     return filtered
   }, [deals, statusFilter, searchQuery, amountFilter])
 
-  // Calculate quick stats
   const quickStats = useMemo(() => {
     const activeDeals = filteredDeals.filter(d => d.status?.toLowerCase() === 'active').length
-    const totalValue = filteredDeals.reduce((sum, d) => sum + (parseFloat(d.principal_advanced) || 0), 0)
-    return { activeDeals, totalDeals: filteredDeals.length, totalValue }
+    const syndicatedAmount = filteredDeals.reduce((sum, d) => sum + (parseFloat(d.purchase_price) || parseFloat(d.principal_advanced) || 0), 0)
+    const totalPayback = filteredDeals.reduce((sum, d) => sum + (parseFloat(d.receivables_purchased_amount) || 0), 0)
+    const amountPaid = filteredDeals.reduce((sum, d) => sum + (parseFloat(d.principal_collected) || 0), 0)
+    const remainingBalance = totalPayback - amountPaid
+    const interestEarned = totalPayback - syndicatedAmount
+
+    return {
+      activeDeals,
+      totalDeals: filteredDeals.length,
+      syndicatedAmount,
+      totalPayback,
+      amountPaid,
+      remainingBalance,
+      interestEarned
+    }
   }, [filteredDeals])
 
   if (loading) {
@@ -84,35 +95,35 @@ const Advances = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-transparent rounded-2xl p-6 border border-orange-200">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center space-x-4">
-            <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg">
-              <Briefcase className="h-8 w-8 text-white" />
+      <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-transparent rounded-xl p-4 border border-orange-200">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-md">
+              <Briefcase className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Deal Management</h1>
-              <p className="text-sm text-gray-600 mt-1">Track and analyze all MCA advances</p>
+              <h1 className="text-xl font-bold text-gray-900">Deal Management</h1>
+              <p className="text-sm text-gray-600">Track and analyze all MCA advances</p>
             </div>
           </div>
 
           {/* Quick Stats */}
-          <div className="flex items-center space-x-4">
-            <div className="px-4 py-3 bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="flex items-center space-x-3">
+            <div className="px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-200">
               <div className="flex items-center space-x-2">
-                <TrendingUp className="h-5 w-5 text-orange-600" />
+                <TrendingUp className="h-4 w-4 text-orange-600" />
                 <div>
                   <p className="text-xs text-gray-500">Active Deals</p>
                   <p className="text-lg font-bold text-gray-900">{quickStats.activeDeals}</p>
                 </div>
               </div>
             </div>
-            <div className="px-4 py-3 bg-white rounded-xl shadow-sm border border-gray-200">
+            <div className="px-4 py-2 bg-white rounded-lg shadow-sm border border-orange-200">
               <div>
-                <p className="text-xs text-gray-500">Total Value</p>
-                <p className="text-lg font-bold text-orange-600">{formatCurrency(quickStats.totalValue)}</p>
+                <p className="text-xs text-gray-500">Total Payback</p>
+                <p className="text-lg font-bold text-orange-600">{formatCurrency(quickStats.totalPayback)}</p>
               </div>
             </div>
           </div>

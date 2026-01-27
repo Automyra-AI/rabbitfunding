@@ -16,7 +16,7 @@ const Layout = ({ children }) => {
         <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
         {/* Scrollable main content */}
-        <main className="flex-1 overflow-y-auto p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-3 lg:p-4">
           {children}
         </main>
       </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, TrendingUp, Award, CheckCircle, Sparkles, Users, CreditCard, Percent } from 'lucide-react'
+import { ChevronDown, ChevronUp, TrendingUp, Award, CheckCircle, Users, Percent, Calculator } from 'lucide-react'
 import { formatCurrency, formatPercentage, formatNumber } from '../../utils/calculations'
 
 const PerformanceStatsCard = ({ stats }) => {
@@ -7,24 +7,14 @@ const PerformanceStatsCard = ({ stats }) => {
 
   const performanceItems = [
     {
-      label: 'Syndicated Capital',
-      value: formatCurrency(stats.syndicatedAmount),
-      highlight: false,
-      icon: TrendingUp,
-      color: 'text-orange-700',
-      bgColor: 'bg-orange-50',
-      borderColor: 'border-orange-200',
-      description: 'Total principal advanced'
-    },
-    {
-      label: 'Net Syndicated Amount',
-      value: formatCurrency(stats.netSyndicatedAmount),
+      label: 'Factor Rate',
+      value: stats.factorRate?.toFixed(3) || '1.536',
       highlight: true,
-      description: 'Syndicated $ minus total CAFs',
-      icon: Sparkles,
-      color: 'text-primary',
-      bgColor: 'bg-primary/5',
-      borderColor: 'border-primary/30'
+      icon: Calculator,
+      color: 'text-orange-600',
+      bgColor: 'bg-orange-50',
+      borderColor: 'border-orange-300',
+      description: 'Payback / Syndicated Amount'
     },
     {
       label: 'Active Deals',
@@ -37,101 +27,89 @@ const PerformanceStatsCard = ({ stats }) => {
       description: 'Currently active / Total deals'
     },
     {
-      label: 'Total CAFs Collected',
-      value: formatCurrency(stats.totalCAFs),
+      label: 'Payment per Transaction',
+      value: formatCurrency(stats.avgPaymentPerTransaction),
       highlight: false,
       icon: Award,
       color: 'text-amber-600',
       bgColor: 'bg-amber-50',
       borderColor: 'border-amber-200',
-      description: 'Total fees earned'
+      description: 'Average payment amount'
     },
     {
-      label: 'Amount Paid Back',
-      value: formatCurrency(stats.paidBack),
+      label: 'Paid Back %',
+      value: formatPercentage(stats.paidBackPercent),
       highlight: false,
-      icon: CheckCircle,
+      icon: Percent,
       color: 'text-orange-700',
       bgColor: 'bg-orange-50',
       borderColor: 'border-orange-300',
-      description: 'Principal + fees collected'
+      description: 'Collection rate (Paid / Payback)'
     },
     {
-      label: 'Average Paid Back %',
-      value: formatPercentage(stats.avgPaidBackPercent),
+      label: 'Total Transactions',
+      value: formatNumber(stats.totalTransactions),
       highlight: false,
-      icon: Percent,
-      color: 'text-amber-700',
-      bgColor: 'bg-amber-50',
-      borderColor: 'border-amber-200',
-      description: 'Avg collection rate across deals'
+      icon: CheckCircle,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200',
+      description: 'Total payments needed'
     },
     {
-      label: 'Total Payments',
-      value: formatNumber(stats.totalPayments),
+      label: 'Remaining Transactions',
+      value: formatNumber(stats.remainingTransactions),
       highlight: false,
-      icon: CreditCard,
-      color: 'text-orange-600',
-      bgColor: 'bg-orange-50',
-      borderColor: 'border-orange-200',
-      description: 'Total payout events processed'
+      icon: TrendingUp,
+      color: 'text-red-600',
+      bgColor: 'bg-red-50',
+      borderColor: 'border-red-200',
+      description: 'Payments still needed'
     },
   ]
 
   return (
-    <div className="card hover:shadow-lg transition-shadow duration-300">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-3">
-          <h2 className="text-xl font-bold text-gray-900">Performance Metrics</h2>
+    <div className="card py-4 px-4 hover:shadow-lg transition-shadow duration-300">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center space-x-2">
+          <h2 className="text-base font-bold text-gray-900">Performance Metrics</h2>
           {expanded && <div className="h-px flex-1 bg-gradient-to-r from-gray-300 to-transparent"></div>}
         </div>
         <button
           onClick={() => setExpanded(!expanded)}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors group"
+          className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors group"
           title={expanded ? 'Collapse' : 'Expand'}
         >
           {expanded ? (
-            <ChevronUp className="h-5 w-5 text-gray-500 group-hover:text-gray-700" />
+            <ChevronUp className="h-4 w-4 text-gray-500 group-hover:text-gray-700" />
           ) : (
-            <ChevronDown className="h-5 w-5 text-gray-500 group-hover:text-gray-700" />
+            <ChevronDown className="h-4 w-4 text-gray-500 group-hover:text-gray-700" />
           )}
         </button>
       </div>
 
       {expanded && (
-        <div className="space-y-3">
+        <div className="grid grid-cols-2 gap-2">
           {performanceItems.map((item, index) => {
             const Icon = item.icon
             return (
               <div
                 key={index}
-                className={`p-4 rounded-xl border-2 ${item.borderColor} ${item.bgColor} hover:shadow-sm transition-all duration-200 group ${
-                  item.highlight ? 'ring-2 ring-primary/20' : ''
+                className={`p-2.5 rounded-lg border ${item.borderColor} ${item.bgColor} hover:shadow-sm transition-all duration-200 group ${
+                  item.highlight ? 'ring-1 ring-orange-300' : ''
                 }`}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3 flex-1">
-                    <div className={`p-2 rounded-lg bg-white shadow-sm group-hover:scale-110 transition-transform duration-200`}>
-                      <Icon className={`h-5 w-5 ${item.color}`} />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <p className={`text-xs font-semibold uppercase tracking-wider ${item.color}`}>
-                          {item.label}
-                        </p>
-                        {item.highlight && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-gradient-to-r from-primary to-primary-dark text-white shadow-sm animate-pulse">
-                            ✨ NEW
-                          </span>
-                        )}
-                      </div>
-                      <p className={`text-2xl font-bold ${item.color} tracking-tight`}>
-                        {item.value}
-                      </p>
-                      {item.description && (
-                        <p className="text-xs text-gray-600 mt-1 font-medium">{item.description}</p>
-                      )}
-                    </div>
+                <div className="flex items-center space-x-2">
+                  <div className={`p-1.5 rounded-md bg-white shadow-sm`}>
+                    <Icon className={`h-3.5 w-3.5 ${item.color}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className={`text-xs font-semibold uppercase tracking-wider ${item.color} truncate`}>
+                      {item.label}
+                    </p>
+                    <p className={`text-base font-bold ${item.color} tracking-tight`}>
+                      {item.value}
+                    </p>
                   </div>
                 </div>
               </div>

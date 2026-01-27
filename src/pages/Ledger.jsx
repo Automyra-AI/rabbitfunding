@@ -4,7 +4,8 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
 import LedgerTable from '../components/ledger/LedgerTable'
 import LedgerFilters from '../components/ledger/LedgerFilters'
-import { formatCurrency, formatDate } from '../utils/calculations'
+import { formatCurrency, formatDate, formatDateForCSV } from '../utils/calculations'
+import { BookOpen } from 'lucide-react'
 
 const Ledger = () => {
   const { payoutEvents, stats, loading, error, refetch } = useData()
@@ -12,7 +13,6 @@ const Ledger = () => {
   const [dateRange, setDateRange] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Transform payout events into ledger transactions
   const transactions = useMemo(() => {
     return payoutEvents
       .map((event, index) => ({
@@ -31,19 +31,17 @@ const Ledger = () => {
       .sort((a, b) => new Date(b.date) - new Date(a.date))
   }, [payoutEvents])
 
-  // Calculate running balance
   const transactionsWithBalance = useMemo(() => {
     let balance = 0
     return transactions.map(transaction => {
       balance += transaction.amount
       return { ...transaction, balance }
-    }).reverse() // Show newest first
+    }).reverse()
   }, [transactions])
 
   const filteredTransactions = useMemo(() => {
     let filtered = transactionsWithBalance
 
-    // Apply search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim()
       filtered = filtered.filter(t =>
@@ -51,7 +49,6 @@ const Ledger = () => {
       )
     }
 
-    // Apply date range filter
     if (dateRange !== 'all') {
       const now = new Date()
       const cutoffDate = new Date()
@@ -78,13 +75,12 @@ const Ledger = () => {
     return filtered
   }, [transactionsWithBalance, dateRange, searchQuery])
 
-  // Export to CSV function
   const handleExport = () => {
     const headers = ['Date', 'Client', 'Type', 'Principal Applied', 'Fee Applied', 'Amount', 'Balance']
     const csvContent = [
       headers.join(','),
       ...filteredTransactions.map(t => [
-        formatDate(t.date),
+        formatDateForCSV(t.date),
         `"${t.client}"`,
         t.type,
         t.principalApplied,
@@ -101,7 +97,6 @@ const Ledger = () => {
     link.click()
   }
 
-  // Save Report function
   const handleSaveReport = () => {
     const reportData = {
       name: `Ledger Report - ${new Date().toLocaleDateString()}`,
@@ -112,7 +107,6 @@ const Ledger = () => {
       generatedAt: new Date().toISOString()
     }
 
-    // Save to localStorage
     const savedReports = JSON.parse(localStorage.getItem('ledgerReports') || '[]')
     savedReports.push(reportData)
     localStorage.setItem('ledgerReports', JSON.stringify(savedReports))
@@ -131,24 +125,22 @@ const Ledger = () => {
   const currentBalance = accountType === 'available' ? stats.available : stats.frozen
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-transparent rounded-2xl p-6 border border-orange-200">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center space-x-4">
-            <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg">
-              <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
+      <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-transparent rounded-xl p-4 border border-orange-200">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-md">
+              <BookOpen className="h-5 w-5 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Transaction Ledger</h1>
-              <p className="text-sm text-gray-600 mt-1">Complete financial transaction history</p>
+              <h1 className="text-xl font-bold text-gray-900">Transaction Ledger</h1>
+              <p className="text-sm text-gray-600">Complete financial transaction history</p>
             </div>
           </div>
 
           {/* Transaction Summary */}
-          <div className="px-4 py-3 bg-white rounded-xl shadow-sm border border-gray-200">
+          <div className="px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-200">
             <div>
               <p className="text-xs text-gray-500">Total Transactions</p>
               <p className="text-lg font-bold text-orange-600">{filteredTransactions.length}</p>
@@ -158,36 +150,36 @@ const Ledger = () => {
       </div>
 
       {/* Account Balance Card */}
-      <div className="card hover:shadow-lg transition-shadow duration-300">
-        <div className="flex items-center justify-between flex-wrap gap-4">
-          <div className="flex items-center space-x-4">
-            <div className="p-3 bg-primary/10 rounded-xl">
-              <svg className="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div className="card py-3 px-4 hover:shadow-lg transition-shadow duration-300">
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 bg-orange-100 rounded-lg">
+              <svg className="h-5 w-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
               </svg>
             </div>
             <div>
               <p className="text-sm font-semibold text-gray-600 uppercase tracking-wider">Current Balance</p>
-              <p className="text-4xl font-bold text-primary mt-1">{formatCurrency(currentBalance)}</p>
+              <p className="text-2xl font-bold text-orange-600">{formatCurrency(currentBalance)}</p>
             </div>
           </div>
           <div className="flex space-x-2">
             <button
               onClick={() => setAccountType('available')}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                 accountType === 'available'
-                  ? 'bg-gradient-to-r from-primary to-primary-dark text-white shadow-lg shadow-primary/30 scale-105'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105'
+                  ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
               Available
             </button>
             <button
               onClick={() => setAccountType('frozen')}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 ${
                 accountType === 'frozen'
-                  ? 'bg-gradient-to-r from-primary to-primary-dark text-white shadow-lg shadow-primary/30 scale-105'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:scale-105'
+                  ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-md'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
               Frozen
