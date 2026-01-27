@@ -31,9 +31,11 @@ const Admin = () => {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  const refreshData = () => {
-    setPendingRequests(getPendingRequests())
-    setAllUsers(getAllUsers())
+  const refreshData = async () => {
+    const pending = await getPendingRequests()
+    const users = await getAllUsers()
+    setPendingRequests(pending)
+    setAllUsers(users)
   }
 
   useEffect(() => {
@@ -44,30 +46,30 @@ const Admin = () => {
     refreshData()
   }, [isAdmin, navigate])
 
-  const handleApprove = (userId) => {
-    approveUser(userId)
+  const handleApprove = async (userId) => {
+    await approveUser(userId)
     setSuccess('User approved successfully')
-    refreshData()
+    await refreshData()
     setTimeout(() => setSuccess(''), 3000)
   }
 
-  const handleReject = (userId) => {
-    rejectUser(userId)
+  const handleReject = async (userId) => {
+    await rejectUser(userId)
     setSuccess('User request rejected')
-    refreshData()
+    await refreshData()
     setTimeout(() => setSuccess(''), 3000)
   }
 
-  const handleDelete = (userId) => {
+  const handleDelete = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
-      deleteUser(userId)
+      await deleteUser(userId)
       setSuccess('User deleted successfully')
-      refreshData()
+      await refreshData()
       setTimeout(() => setSuccess(''), 3000)
     }
   }
 
-  const handleAddUser = (e) => {
+  const handleAddUser = async (e) => {
     e.preventDefault()
     setError('')
 
@@ -81,14 +83,14 @@ const Admin = () => {
       return
     }
 
-    const result = addUser(newUserName, newUserEmail, newUserPassword)
+    const result = await addUser(newUserName, newUserEmail, newUserPassword)
     if (result.success) {
       setSuccess('User added successfully')
       setNewUserName('')
       setNewUserEmail('')
       setNewUserPassword('')
       setShowAddUser(false)
-      refreshData()
+      await refreshData()
       setTimeout(() => setSuccess(''), 3000)
     } else {
       setError(result.error)
