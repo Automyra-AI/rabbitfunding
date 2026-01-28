@@ -32,3 +32,8 @@ dist-ssr
 credentials.json
 service-account-key.json
 nul
+
+# Server local files (not needed for Vercel)
+server/users.json
+server/database.sqlite
+server/node_modules

@@ -1,4 +1,5 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+// Use relative URL for Vercel (same domain), or localhost for development
+const API_URL = import.meta.env.VITE_API_URL || '/api'
 
 // Token management
 const getToken = () => localStorage.getItem('rf_auth_token')
@@ -112,7 +113,7 @@ export const adminApi = {
   // Approve user
   approveUser: async (userId) => {
     try {
-      await apiRequest(`/admin/approve/${userId}`, { method: 'POST' })
+      await apiRequest(`/admin/approve?userId=${userId}`, { method: 'POST' })
       return { success: true }
     } catch (error) {
       return { success: false, error: error.message }
@@ -122,7 +123,7 @@ export const adminApi = {
   // Reject user
   rejectUser: async (userId) => {
     try {
-      await apiRequest(`/admin/reject/${userId}`, { method: 'POST' })
+      await apiRequest(`/admin/reject?userId=${userId}`, { method: 'POST' })
       return { success: true }
     } catch (error) {
       return { success: false, error: error.message }
@@ -132,7 +133,7 @@ export const adminApi = {
   // Delete user
   deleteUser: async (userId) => {
     try {
-      await apiRequest(`/admin/users/${userId}`, { method: 'DELETE' })
+      await apiRequest(`/admin/users?userId=${userId}`, { method: 'DELETE' })
       return { success: true }
     } catch (error) {
       return { success: false, error: error.message }
