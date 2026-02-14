@@ -21,7 +21,17 @@ const apiRequest = async (endpoint, options = {}) => {
 
   try {
     const response = await fetch(`${API_URL}${endpoint}`, config)
-    const data = await response.json()
+
+    // Handle empty or non-JSON responses
+    const text = await response.text()
+    let data = {}
+    if (text) {
+      try {
+        data = JSON.parse(text)
+      } catch {
+        throw new Error('Server returned invalid response')
+      }
+    }
 
     if (!response.ok) {
       throw new Error(data.error || 'Request failed')
@@ -29,6 +39,9 @@ const apiRequest = async (endpoint, options = {}) => {
 
     return data
   } catch (error) {
+    if (error.message === 'Failed to fetch') {
+      throw new Error('Cannot connect to server. Make sure backend is running.')
+    }
     throw error
   }
 }
