@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight, CheckCircle, AlertCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, CheckCircle, AlertCircle, Clock, BadgeCheck } from 'lucide-react'
 import { formatCurrency, formatDate } from '../../utils/calculations'
 
 const ITEMS_PER_PAGE = 50
@@ -11,14 +11,37 @@ const LedgerTable = ({ transactions }) => {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
   const paginatedTransactions = transactions.slice(startIndex, startIndex + ITEMS_PER_PAGE)
 
-  // Get row styling based on transaction status
+  // Get row styling based on payment status (Pending/Settled)
   const getRowClass = (transaction) => {
-    const hasError = transaction.error && transaction.error.trim() !== ''
-    if (hasError) {
-      return 'bg-red-50/30 border-l-4 border-l-red-400'
+    if (transaction.isPending) {
+      return 'bg-amber-50/50 border-l-4 border-l-amber-400'
     }
-    // No error = good transaction
-    return 'bg-green-50/30 border-l-4 border-l-green-400'
+    if (transaction.isSettled) {
+      return 'bg-green-50/50 border-l-4 border-l-green-400'
+    }
+    // Default - no transaction type specified
+    return 'border-l-4 border-l-gray-200'
+  }
+
+  // Get status badge
+  const getStatusBadge = (transaction) => {
+    if (transaction.isPending) {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+          <Clock className="h-3 w-3 mr-1" />
+          Pending
+        </span>
+      )
+    }
+    if (transaction.isSettled) {
+      return (
+        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          <BadgeCheck className="h-3 w-3 mr-1" />
+          Settled
+        </span>
+      )
+    }
+    return <span className="text-xs text-gray-400">-</span>
   }
 
   return (
@@ -30,6 +53,7 @@ const LedgerTable = ({ transactions }) => {
               <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Key ID</th>
               <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Date</th>
               <th className="px-3 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Client</th>
+              <th className="px-3 py-2 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Status</th>
               <th className="px-3 py-2 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Amount</th>
               <th className="px-3 py-2 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Principal</th>
               <th className="px-3 py-2 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Fee</th>
@@ -54,6 +78,7 @@ const LedgerTable = ({ transactions }) => {
                   </td>
                   <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-600">{formatDate(transaction.date)}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">{transaction.client}</td>
+                  <td className="px-3 py-2 whitespace-nowrap text-center">{getStatusBadge(transaction)}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-sm text-right font-medium text-orange-600">{formatCurrency(transaction.amount)}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-sm text-right text-gray-900">{formatCurrency(transaction.principalApplied)}</td>
                   <td className="px-3 py-2 whitespace-nowrap text-sm text-right text-gray-600">{formatCurrency(transaction.feeApplied)}</td>
@@ -65,7 +90,7 @@ const LedgerTable = ({ transactions }) => {
 
             {paginatedTransactions.length === 0 && (
               <tr>
-                <td colSpan="8" className="px-3 py-8 text-center text-gray-500">
+                <td colSpan="9" className="px-3 py-8 text-center text-gray-500">
                   No transactions found
                 </td>
               </tr>
@@ -83,12 +108,12 @@ const LedgerTable = ({ transactions }) => {
             </span>
             <div className="flex items-center space-x-3 text-xs">
               <span className="flex items-center space-x-1">
-                <span className="w-3 h-3 bg-green-400 rounded"></span>
-                <span className="text-gray-500">No Error</span>
+                <span className="w-3 h-3 bg-amber-400 rounded"></span>
+                <span className="text-gray-500">Pending (Debit)</span>
               </span>
               <span className="flex items-center space-x-1">
-                <span className="w-3 h-3 bg-red-400 rounded"></span>
-                <span className="text-gray-500">Has Error</span>
+                <span className="w-3 h-3 bg-green-400 rounded"></span>
+                <span className="text-gray-500">Settled (Cleared)</span>
               </span>
             </div>
           </div>

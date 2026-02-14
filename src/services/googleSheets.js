@@ -158,38 +158,80 @@ export const fetchPayoutEvents = async () => {
     // Sheet columns by INDEX (0-based):
     // 0: History KeyID, 1: Order ID, 2: SubID, 3: Consumer Unique ID, 4: Client Name,
     // 5: Amount, 6: Principal Applied, 7: Fee Applied, 8: Transaction Date, 9: Processed Date,
-    // 10: QBO Principal JE, 11: QBO Fee JE, 12: Match Method, 13: Auth Code, 14: Error
-    const events = rows.slice(1).map((row, index) => {
-      return {
-        // Unique ID for React key
-        id: index + 1,
+    // 10: QBO Principal JE, 11: QBO Fee JE, 12: Match Method, 13: Auth Code, 14: Error,
+    // 15: Transaction Type (Check Debit / Check Settlement)
+    // 16: Reference Key ID (used by Check Settlement to match with Check Debit's History Key ID)
 
-        // Exact values from sheet columns
-        history_keyid: row[0] || '',
-        order_id: row[1] || '',
-        sub_id: row[2] || '',
-        consumer_unique_id: row[3] || '',
-        client_name: row[4] || '',
-        amount: parseNumber(row[5]),
-        principal_applied: parseNumber(row[6]),
-        fee_applied: parseNumber(row[7]),
-        transaction_date: row[8] || '',
-        processed_date: row[9] || '',
-        qbo_principal_je: row[10] || '',
-        qbo_fee_je: row[11] || '',
-        match_method: row[12] || '',
-        auth_code: row[13] || '',
-        error: row[14] || '',
+    // STEP 1: Collect all Reference Key IDs from "Check Settlement" transactions
+    // Match logic: Check Debit's History Key ID == Check Settlement's Reference Key ID
+    const settledHistoryKeyIds = new Set()
+    rows.slice(1).forEach(row => {
+      const transactionType = (row[15] || '').toLowerCase().trim()
+      const isSettlement = transactionType.includes('settlement') || transactionType.includes('settl')
+      const referenceKeyId = (row[16] || '').trim()
 
-        // For Ledger table display - exact values
-        date: row[8] || '',
-        type: 'Credit',
-        client: row[4] || '',
-        principalApplied: parseNumber(row[6]),
-        feeApplied: parseNumber(row[7]),
-        description: row[12] || 'Payment'
+      if (isSettlement && referenceKeyId) {
+        settledHistoryKeyIds.add(referenceKeyId)
       }
     })
+
+    console.log(`Found ${settledHistoryKeyIds.size} settled Reference Key IDs`)
+
+    // STEP 2: Map transactions - Only show Check Debits, hide Check Settlements
+    // Mark Debit as Settled if its History Key ID matches any Settlement's Reference Key ID
+    const events = rows.slice(1)
+      .map((row, index) => {
+        const transactionType = (row[15] || '').toLowerCase().trim()
+        const isSettlement = transactionType.includes('settlement') || transactionType.includes('settl')
+
+        // Skip Check Settlement transactions - only show Debits in Ledger
+        if (isSettlement) {
+          return null
+        }
+
+        const historyKeyId = (row[0] || '').trim()
+
+        // Check if this Debit's History Key ID has a matching Settlement Reference Key ID
+        const isSettledByMatch = historyKeyId && settledHistoryKeyIds.has(historyKeyId)
+
+        return {
+          // Unique ID for React key
+          id: index + 1,
+
+          // Exact values from sheet columns
+          history_keyid: row[0] || '',
+          order_id: row[1] || '',
+          sub_id: row[2] || '',
+          consumer_unique_id: row[3] || '',
+          client_name: row[4] || '',
+          amount: parseNumber(row[5]),
+          principal_applied: parseNumber(row[6]),
+          fee_applied: parseNumber(row[7]),
+          transaction_date: row[8] || '',
+          processed_date: row[9] || '',
+          qbo_principal_je: row[10] || '',
+          qbo_fee_je: row[11] || '',
+          match_method: row[12] || '',
+          auth_code: row[13] || '',
+          error: row[14] || '',
+          transaction_type: row[15] || '',
+          reference_key_id: row[16] || '',
+
+          // Payment status - Pending until matching Settlement comes
+          isPending: !isSettledByMatch,
+          isSettled: isSettledByMatch,
+          paymentStatus: isSettledByMatch ? 'settled' : 'pending',
+
+          // For Ledger table display - exact values
+          date: row[8] || '',
+          type: 'Credit',
+          client: row[4] || '',
+          principalApplied: parseNumber(row[6]),
+          feeApplied: parseNumber(row[7]),
+          description: row[12] || 'Payment'
+        }
+      })
+      .filter(event => event !== null) // Remove Check Settlement transactions
 
     console.log('Sample payout event after mapping:', events[0])
     return events

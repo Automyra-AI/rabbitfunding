@@ -12,6 +12,7 @@ const Ledger = () => {
   const [accountType, setAccountType] = useState('available')
   const [dateRange, setDateRange] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
 
   const transactions = useMemo(() => {
     return payoutEvents
@@ -26,7 +27,12 @@ const Ledger = () => {
         principalApplied: event.principal_applied || 0,
         feeApplied: event.fee_applied || 0,
         matchMethod: event.match_method || '',
-        error: event.error || ''
+        error: event.error || '',
+        // Payment status from Transaction Type column
+        transaction_type: event.transaction_type || '',
+        isPending: event.isPending || false,
+        isSettled: event.isSettled || false,
+        paymentStatus: event.paymentStatus || 'unknown'
       }))
       .sort((a, b) => new Date(b.date) - new Date(a.date))
   }, [payoutEvents])
@@ -42,6 +48,7 @@ const Ledger = () => {
   const filteredTransactions = useMemo(() => {
     let filtered = transactionsWithBalance
 
+    // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim()
       filtered = filtered.filter(t =>
@@ -49,6 +56,16 @@ const Ledger = () => {
       )
     }
 
+    // Filter by status (Pending/Settled)
+    if (statusFilter && statusFilter !== 'all') {
+      if (statusFilter === 'pending') {
+        filtered = filtered.filter(t => t.isPending)
+      } else if (statusFilter === 'settled') {
+        filtered = filtered.filter(t => t.isSettled)
+      }
+    }
+
+    // Filter by date range
     if (dateRange !== 'all') {
       const now = new Date()
       const cutoffDate = new Date()
@@ -73,16 +90,28 @@ const Ledger = () => {
     }
 
     return filtered
-  }, [transactionsWithBalance, dateRange, searchQuery])
+  }, [transactionsWithBalance, dateRange, searchQuery, statusFilter])
+
+  // Calculate pending vs settled totals
+  const statusSummary = useMemo(() => {
+    const pending = filteredTransactions.filter(t => t.isPending)
+    const settled = filteredTransactions.filter(t => t.isSettled)
+    return {
+      pendingCount: pending.length,
+      pendingAmount: pending.reduce((sum, t) => sum + t.amount, 0),
+      settledCount: settled.length,
+      settledAmount: settled.reduce((sum, t) => sum + t.amount, 0)
+    }
+  }, [filteredTransactions])
 
   const handleExport = () => {
-    const headers = ['Date', 'Client', 'Type', 'Principal Applied', 'Fee Applied', 'Amount', 'Balance']
+    const headers = ['Date', 'Client', 'Status', 'Principal Applied', 'Fee Applied', 'Amount', 'Balance']
     const csvContent = [
       headers.join(','),
       ...filteredTransactions.map(t => [
         formatDateForCSV(t.date),
         `"${t.client}"`,
-        t.type,
+        t.isPending ? 'Pending' : (t.isSettled ? 'Settled' : '-'),
         t.principalApplied,
         t.feeApplied,
         t.amount,
@@ -102,6 +131,7 @@ const Ledger = () => {
       name: `Ledger Report - ${new Date().toLocaleDateString()}`,
       dateRange,
       searchQuery,
+      statusFilter,
       transactionCount: filteredTransactions.length,
       totalAmount: filteredTransactions.reduce((sum, t) => sum + t.amount, 0),
       generatedAt: new Date().toISOString()
@@ -139,11 +169,15 @@ const Ledger = () => {
             </div>
           </div>
 
-          {/* Transaction Summary */}
-          <div className="px-4 py-2 bg-white rounded-lg shadow-sm border border-gray-200">
-            <div>
-              <p className="text-xs text-gray-500">Total Transactions</p>
-              <p className="text-lg font-bold text-orange-600">{filteredTransactions.length}</p>
+          {/* Status Summary */}
+          <div className="flex items-center space-x-3">
+            <div className="px-3 py-2 bg-amber-50 rounded-lg border border-amber-200">
+              <p className="text-xs text-amber-600 font-medium">Pending</p>
+              <p className="text-sm font-bold text-amber-700">{statusSummary.pendingCount} ({formatCurrency(statusSummary.pendingAmount)})</p>
+            </div>
+            <div className="px-3 py-2 bg-green-50 rounded-lg border border-green-200">
+              <p className="text-xs text-green-600 font-medium">Settled</p>
+              <p className="text-sm font-bold text-green-700">{statusSummary.settledCount} ({formatCurrency(statusSummary.settledAmount)})</p>
             </div>
           </div>
         </div>
@@ -193,6 +227,8 @@ const Ledger = () => {
         onDateRangeChange={setDateRange}
         searchQuery={searchQuery}
         onSearchQueryChange={setSearchQuery}
+        statusFilter={statusFilter}
+        onStatusFilterChange={setStatusFilter}
         totalCount={transactionsWithBalance.length}
         filteredCount={filteredTransactions.length}
         onExport={handleExport}

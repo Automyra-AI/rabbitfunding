@@ -1,10 +1,12 @@
-import { Calendar, Search, Download, FileText } from 'lucide-react'
+import { Calendar, Search, Download, FileText, Filter } from 'lucide-react'
 
 const LedgerFilters = ({
   dateRange,
   onDateRangeChange,
   searchQuery,
   onSearchQueryChange,
+  statusFilter,
+  onStatusFilterChange,
   totalCount,
   filteredCount,
   onExport,
@@ -23,6 +25,20 @@ const LedgerFilters = ({
             onChange={(e) => onSearchQueryChange(e.target.value)}
             className="w-full pl-7 pr-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-transparent"
           />
+        </div>
+
+        {/* Status Filter */}
+        <div className="flex items-center space-x-1">
+          <Filter className="h-4 w-4 text-gray-500" />
+          <select
+            value={statusFilter || 'all'}
+            onChange={(e) => onStatusFilterChange(e.target.value)}
+            className="border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="all">All Status</option>
+            <option value="pending">Pending (Debit)</option>
+            <option value="settled">Settled (Cleared)</option>
+          </select>
         </div>
 
         {/* Date Range Filter */}
@@ -64,11 +80,12 @@ const LedgerFilters = ({
           <span className="text-xs text-gray-600">
             {filteredCount}/{totalCount}
           </span>
-          {(searchQuery || dateRange !== 'all') && (
+          {(searchQuery || dateRange !== 'all' || (statusFilter && statusFilter !== 'all')) && (
             <button
               onClick={() => {
                 onSearchQueryChange('')
                 onDateRangeChange('all')
+                onStatusFilterChange('all')
               }}
               className="text-xs text-primary hover:text-primary-dark font-medium"
             >
