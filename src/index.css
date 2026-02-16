@@ -186,7 +186,18 @@
 /* Layout fixes for full-screen fit */
 html, body, #root {
   height: 100%;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  max-width: 100vw;
+}
+
+/* Prevent any horizontal overflow globally */
+*, *::before, *::after {
+  max-width: 100%;
+}
+
+table, thead, tbody, tr, th, td {
+  max-width: none;
 }
 
 /* Ensure proper overflow handling for main content */

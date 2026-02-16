@@ -20,26 +20,26 @@ const Navbar = () => {
   }
 
   return (
-    <header className="bg-white border-b-2 border-gray-200 px-4 py-2 flex items-center justify-between">
+    <header className="bg-white border-b-2 border-gray-200 px-2 sm:px-4 py-2 flex items-center justify-between min-w-0 overflow-hidden">
       {/* Left side - Brand */}
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-2 flex-shrink-0">
         <div className="p-1.5 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-md">
           <Rabbit className="h-5 w-5 text-white" />
         </div>
-        <div>
+        <div className="hidden sm:block">
           <h1 className="text-lg font-bold text-orange-600">RabbitFunding</h1>
           <p className="text-[10px] text-gray-500">MCA Portal</p>
         </div>
       </div>
 
       {/* Right side - Actions */}
-      <div className="flex items-center space-x-2">
+      <div className="flex items-center space-x-1 sm:space-x-2 min-w-0 flex-shrink-0">
         {/* Live Indicator */}
-        <div className="flex items-center space-x-1.5 px-2 py-1.5 bg-gray-50 rounded-lg border border-gray-200">
-          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span className="text-xs font-medium text-gray-600">Live</span>
+        <div className="flex items-center space-x-1 px-1.5 sm:px-2 py-1.5 bg-gray-50 rounded-lg border border-gray-200">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse flex-shrink-0"></div>
+          <span className="text-xs font-medium text-gray-600 hidden sm:inline">Live</span>
           {lastUpdated && (
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-500 hidden md:inline">
               {lastUpdated.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
             </span>
           )}
@@ -55,10 +55,10 @@ const Navbar = () => {
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
         </button>
 
-        {/* Export Button */}
+        {/* Export Button - hidden on small screens */}
         <button
           onClick={handleExport}
-          className="flex items-center space-x-1.5 px-3 py-1.5 text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-lg border border-gray-200 transition-all duration-200"
+          className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 text-gray-700 hover:text-orange-600 hover:bg-orange-50 rounded-lg border border-gray-200 transition-all duration-200"
         >
           <Download className="h-4 w-4" />
           <span className="text-xs font-medium">Export</span>
@@ -68,11 +68,11 @@ const Navbar = () => {
         <div className="relative">
           <button
             onClick={() => setShowUserMenu(!showUserMenu)}
-            className="flex items-center space-x-1.5 px-3 py-1.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+            className="flex items-center space-x-1 sm:space-x-1.5 px-2 sm:px-3 py-1.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
           >
-            <User className="h-4 w-4" />
-            <span className="text-xs font-medium max-w-[100px] truncate">{user?.name || 'User'}</span>
-            <ChevronDown className="h-3 w-3" />
+            <User className="h-4 w-4 flex-shrink-0" />
+            <span className="text-xs font-medium max-w-[60px] sm:max-w-[100px] truncate hidden sm:inline">{user?.name || 'User'}</span>
+            <ChevronDown className="h-3 w-3 flex-shrink-0" />
           </button>
 
           {showUserMenu && (
@@ -81,14 +81,14 @@ const Navbar = () => {
                 className="fixed inset-0 z-10"
                 onClick={() => setShowUserMenu(false)}
               />
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20 overflow-hidden">
-                <div className="px-4 py-3 border-b border-gray-100">
+              <div className="absolute right-0 mt-2 w-44 sm:w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-20 overflow-hidden">
+                <div className="px-3 py-2 sm:px-4 sm:py-3 border-b border-gray-100">
                   <p className="text-sm font-medium text-gray-900 truncate">{user?.name}</p>
                   <p className="text-xs text-gray-500 truncate">{user?.email}</p>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="w-full flex items-center space-x-2 px-4 py-2.5 text-red-600 hover:bg-red-50 transition-colors"
+                  className="w-full flex items-center space-x-2 px-3 sm:px-4 py-2.5 text-red-600 hover:bg-red-50 transition-colors"
                 >
                   <LogOut className="h-4 w-4" />
                   <span className="text-sm font-medium">Sign Out</span>

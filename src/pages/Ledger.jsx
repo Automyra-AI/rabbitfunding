@@ -155,29 +155,29 @@ const Ledger = () => {
   const currentBalance = accountType === 'available' ? stats.available : stats.frozen
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 overflow-hidden">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-transparent rounded-xl p-4 border border-orange-200">
-        <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="bg-gradient-to-r from-orange-50 via-amber-50 to-transparent rounded-xl p-3 sm:p-4 border border-orange-200">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-md">
+            <div className="p-2 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-md flex-shrink-0">
               <BookOpen className="h-5 w-5 text-white" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">Transaction Ledger</h1>
-              <p className="text-sm text-gray-600">Complete financial transaction history</p>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900">Transaction Ledger</h1>
+              <p className="text-xs sm:text-sm text-gray-600">Complete financial transaction history</p>
             </div>
           </div>
 
           {/* Status Summary */}
-          <div className="flex items-center space-x-3">
-            <div className="px-3 py-2 bg-amber-50 rounded-lg border border-amber-200">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <div className="px-2 sm:px-3 py-1.5 sm:py-2 bg-amber-50 rounded-lg border border-amber-200 min-w-0">
               <p className="text-xs text-amber-600 font-medium">Pending</p>
-              <p className="text-sm font-bold text-amber-700">{statusSummary.pendingCount} ({formatCurrency(statusSummary.pendingAmount)})</p>
+              <p className="text-xs sm:text-sm font-bold text-amber-700 truncate">{statusSummary.pendingCount} ({formatCurrency(statusSummary.pendingAmount)})</p>
             </div>
-            <div className="px-3 py-2 bg-green-50 rounded-lg border border-green-200">
+            <div className="px-2 sm:px-3 py-1.5 sm:py-2 bg-green-50 rounded-lg border border-green-200 min-w-0">
               <p className="text-xs text-green-600 font-medium">Settled</p>
-              <p className="text-sm font-bold text-green-700">{statusSummary.settledCount} ({formatCurrency(statusSummary.settledAmount)})</p>
+              <p className="text-xs sm:text-sm font-bold text-green-700 truncate">{statusSummary.settledCount} ({formatCurrency(statusSummary.settledAmount)})</p>
             </div>
           </div>
         </div>
