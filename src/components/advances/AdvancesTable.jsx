@@ -24,6 +24,8 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
       const amountPaid = deal.principal_collected || 0
       const paymentPerTransaction = deal.last_payment_amount || 300
       const syndicatedAmountOrigination = deal.syndicated_amount_origination || 0
+      // Origination Fee = Purchase Price - Syndicated Amount Origination
+      const originationFee = syndicatedAmountOrigination > 0 ? syndicatedAmount - syndicatedAmountOrigination : 0
       const factorRate = deal.factor_rate || (syndicatedAmount > 0 ? totalPayback / syndicatedAmount : DEFAULT_FACTOR_RATE)
       const interest = totalPayback - syndicatedAmount
       const remainingBalance = Math.max(0, totalPayback - amountPaid)
@@ -41,6 +43,7 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
         ...deal,
         syndicatedAmount,
         syndicatedAmountOrigination,
+        originationFee,
         totalPayback,
         amountPaid,
         remainingBalance,
@@ -81,13 +84,14 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
     const sums = sortedDeals.reduce((acc, deal) => ({
       syndicatedAmount: acc.syndicatedAmount + (deal.syndicatedAmount || 0),
       syndicatedAmountOrigination: acc.syndicatedAmountOrigination + (deal.syndicatedAmountOrigination || 0),
+      originationFee: acc.originationFee + (deal.originationFee || 0),
       totalPayback: acc.totalPayback + (deal.totalPayback || 0),
       amountPaid: acc.amountPaid + (deal.amountPaid || 0),
       remainingBalance: acc.remainingBalance + (deal.remainingBalance || 0),
       interest: acc.interest + (deal.interest || 0),
       totalTransactions: acc.totalTransactions + (deal.totalTransactions || 0),
       remainingTransactions: acc.remainingTransactions + (deal.remainingTransactions || 0)
-    }), { syndicatedAmount: 0, syndicatedAmountOrigination: 0, totalPayback: 0, amountPaid: 0, remainingBalance: 0, interest: 0, totalTransactions: 0, remainingTransactions: 0 })
+    }), { syndicatedAmount: 0, syndicatedAmountOrigination: 0, originationFee: 0, totalPayback: 0, amountPaid: 0, remainingBalance: 0, interest: 0, totalTransactions: 0, remainingTransactions: 0 })
     sums.avgFactorRate = sums.syndicatedAmount > 0 ? sums.totalPayback / sums.syndicatedAmount : DEFAULT_FACTOR_RATE
     return sums
   }, [sortedDeals])
@@ -118,7 +122,7 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
                 <th className="px-3 py-2.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('syndicatedAmount')}>Syndicated</th>
               )}
               {visibleColumns.syndicatedOrigination && (
-                <th className="px-3 py-2.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('syndicatedAmountOrigination')}>Origination</th>
+                <th className="px-3 py-2.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('originationFee')}>Origination Fee</th>
               )}
               {visibleColumns.factorRate && (
                 <th className="px-3 py-2.5 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('factorRate')}>Factor</th>
@@ -175,7 +179,7 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
                   <td className="px-3 py-2.5 whitespace-nowrap text-sm text-right font-medium text-gray-900">{formatCurrency(deal.syndicatedAmount)}</td>
                 )}
                 {visibleColumns.syndicatedOrigination && (
-                  <td className="px-3 py-2.5 whitespace-nowrap text-sm text-right text-purple-600">{formatCurrency(deal.syndicatedAmountOrigination)}</td>
+                  <td className="px-3 py-2.5 whitespace-nowrap text-sm text-right text-purple-600">{formatCurrency(deal.originationFee)}</td>
                 )}
                 {visibleColumns.factorRate && (
                   <td className="px-3 py-2.5 whitespace-nowrap text-sm text-center text-gray-600">{deal.factorRate.toFixed(3)}</td>
@@ -236,7 +240,7 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
                 <td className="px-3 py-3 text-sm text-right text-gray-900 font-bold">{formatCurrency(totals.syndicatedAmount)}</td>
               )}
               {visibleColumns.syndicatedOrigination && (
-                <td className="px-3 py-3 text-sm text-right text-purple-600 font-bold">{formatCurrency(totals.syndicatedAmountOrigination)}</td>
+                <td className="px-3 py-3 text-sm text-right text-purple-600 font-bold">{formatCurrency(totals.originationFee)}</td>
               )}
               {visibleColumns.factorRate && <td className="px-3 py-3 text-sm text-center font-bold">{totals.avgFactorRate.toFixed(3)}</td>}
               {visibleColumns.payback && (
