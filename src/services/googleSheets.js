@@ -234,6 +234,8 @@ export const fetchPayoutEvents = async () => {
       .filter(event => event !== null) // Remove Check Settlement transactions
 
     console.log('Sample payout event after mapping:', events[0])
+    // Log first 5 transaction dates for debugging sort order
+    console.log('Transaction dates (first 5):', events.slice(0, 5).map(e => ({ date: e.transaction_date, id: e.history_keyid, status: e.paymentStatus })))
     return events
   } catch (error) {
     console.error('Error fetching payout events from Google Sheets:', error)

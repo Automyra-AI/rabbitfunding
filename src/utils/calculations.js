@@ -127,17 +127,41 @@ export const formatPercentage = (value, decimals = 1) => {
   return `${value.toFixed(decimals)}%`
 }
 
+// Parse date strings like "JAN 13, 2026 02:01PM", "2026-02-18", "02/17/2026" into a Date object
+export const parseDate = (dateString) => {
+  if (!dateString) return new Date(0)
+
+  try {
+    const str = String(dateString).trim()
+
+    // Strip time portion: "02:01PM", " 02:01 PM", "02:01AM" etc.
+    const dateOnly = str
+      .replace(/\s*\d{1,2}:\d{2}\s*(AM|PM)/i, '')  // "JAN 13, 2026 02:01PM" -> "JAN 13, 2026"
+      .replace(/\s*\d{1,2}:\d{2}:\d{2}/i, '')       // "2026-02-18 05:31:21" -> "2026-02-18"
+      .trim()
+
+    // Try parsing the cleaned date
+    const date = new Date(dateOnly)
+    if (!isNaN(date.getTime())) return date
+
+    // Try the original string as-is
+    const fallback = new Date(str)
+    if (!isNaN(fallback.getTime())) return fallback
+
+    return new Date(0)
+  } catch {
+    return new Date(0)
+  }
+}
+
 export const formatDate = (dateString) => {
   if (!dateString) return '-'
 
   try {
-    // Handle format like "JAN 13, 2026 02:01PM"
-    // Just extract and return the date part (remove time)
-    const dateOnly = dateString.replace(/\s+\d{1,2}:\d{2}(AM|PM)/i, '').trim()
-
-    const date = new Date(dateOnly)
-    if (isNaN(date.getTime())) {
+    const date = parseDate(dateString)
+    if (date.getTime() === 0) {
       // If parsing fails, return the original string without time
+      const dateOnly = String(dateString).replace(/\s+\d{1,2}:\d{2}\s*(AM|PM)/i, '').trim()
       return dateOnly || dateString
     }
 

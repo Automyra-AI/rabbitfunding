@@ -4,7 +4,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
 import LedgerTable from '../components/ledger/LedgerTable'
 import LedgerFilters from '../components/ledger/LedgerFilters'
-import { formatCurrency, formatDate, formatDateForCSV } from '../utils/calculations'
+import { formatCurrency, formatDate, formatDateForCSV, parseDate } from '../utils/calculations'
 import { BookOpen } from 'lucide-react'
 
 const Ledger = () => {
@@ -15,11 +15,15 @@ const Ledger = () => {
   const [statusFilter, setStatusFilter] = useState('all')
 
   const transactions = useMemo(() => {
-    return payoutEvents
-      .map((event, index) => ({
+    const mapped = payoutEvents.map((event, index) => {
+      const dateStr = event.transaction_date || event.date || ''
+      // Pre-compute timestamp for reliable sorting
+      const timestamp = parseDate(dateStr).getTime()
+      return {
         id: index + 1,
         history_keyid: event.history_keyid || '',
-        date: event.transaction_date,
+        date: dateStr,
+        _timestamp: timestamp,
         type: 'Credit',
         amount: event.amount || 0,
         description: event.match_method || 'Payment',
@@ -28,21 +32,35 @@ const Ledger = () => {
         feeApplied: event.fee_applied || 0,
         matchMethod: event.match_method || '',
         error: event.error || '',
-        // Payment status from Transaction Type column
         transaction_type: event.transaction_type || '',
         isPending: event.isPending || false,
         isSettled: event.isSettled || false,
         paymentStatus: event.paymentStatus || 'unknown'
-      }))
-      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      }
+    })
+
+    // Sort strictly by date - LATEST first, all transactions mixed together
+    mapped.sort((a, b) => {
+      const diff = b._timestamp - a._timestamp
+      // If same date, sort by History Key ID descending (newest transaction first)
+      if (diff === 0) {
+        return (b.history_keyid || '').localeCompare(a.history_keyid || '')
+      }
+      return diff
+    })
+
+    return mapped
   }, [payoutEvents])
 
   const transactionsWithBalance = useMemo(() => {
+    // Calculate running balance: oldest to newest, then display newest first
+    const oldestFirst = [...transactions].reverse()
     let balance = 0
-    return transactions.map(transaction => {
-      balance += transaction.amount
-      return { ...transaction, balance }
-    }).reverse()
+    const withBalance = oldestFirst.map(t => {
+      balance += t.amount
+      return { ...t, balance }
+    })
+    return withBalance.reverse()
   }, [transactions])
 
   const filteredTransactions = useMemo(() => {
@@ -86,7 +104,7 @@ const Ledger = () => {
           break
       }
 
-      filtered = filtered.filter(t => new Date(t.date) >= cutoffDate)
+      filtered = filtered.filter(t => parseDate(t.date) >= cutoffDate)
     }
 
     return filtered
