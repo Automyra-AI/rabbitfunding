@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Clock, BadgeCheck, Hash, Calendar, User, DollarSign, FileText, AlertTriangle, Save, ArrowRightLeft } from 'lucide-react'
+import { X, Clock, BadgeCheck, Hash, Calendar, User, DollarSign, FileText, AlertTriangle, Save, ArrowRightLeft, CheckCircle, XCircle } from 'lucide-react'
 import { formatCurrency, formatDate } from '../../utils/calculations'
 
 const TransactionModal = ({ transaction, onClose, onSave }) => {
@@ -13,6 +13,8 @@ const TransactionModal = ({ transaction, onClose, onSave }) => {
     notes: ''
   })
   const [saving, setSaving] = useState(false)
+  const [saveStatus, setSaveStatus] = useState(null) // 'success' | 'error' | null
+  const [saveError, setSaveError] = useState('')
 
   useEffect(() => {
     if (transaction) {
@@ -36,8 +38,15 @@ const TransactionModal = ({ transaction, onClose, onSave }) => {
 
   const handleSave = async () => {
     setSaving(true)
+    setSaveStatus(null)
+    setSaveError('')
     try {
       await onSave({ ...transaction, ...formData })
+      setSaveStatus('success')
+      setTimeout(() => onClose(), 1500)
+    } catch (err) {
+      setSaveStatus('error')
+      setSaveError(err.message || 'Failed to save changes')
     } finally {
       setSaving(false)
     }
@@ -231,6 +240,20 @@ const TransactionModal = ({ transaction, onClose, onSave }) => {
               </div>
             </div>
           </div>
+
+          {/* Save Status Message */}
+          {saveStatus === 'success' && (
+            <div className="mx-5 mb-0 px-3 py-2 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-2">
+              <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+              <span className="text-sm text-green-700 font-medium">Transaction updated in Google Sheet</span>
+            </div>
+          )}
+          {saveStatus === 'error' && (
+            <div className="mx-5 mb-0 px-3 py-2 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
+              <XCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
+              <span className="text-sm text-red-700 font-medium">{saveError}</span>
+            </div>
+          )}
 
           {/* Footer */}
           <div className="px-5 py-3 border-t border-gray-200 bg-gray-50 flex items-center justify-between">

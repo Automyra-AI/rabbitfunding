@@ -242,3 +242,42 @@ export const fetchPayoutEvents = async () => {
     throw error
   }
 }
+
+// Update a transaction in the Payout Events sheet via Google Apps Script Web App
+export const updatePayoutEvent = async (historyKeyId, updates) => {
+  const webAppUrl = import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL
+
+  if (!webAppUrl) {
+    throw new Error('Google Apps Script URL not configured. Add VITE_GOOGLE_APPS_SCRIPT_URL to your .env file.')
+  }
+
+  try {
+    const response = await fetch(webAppUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({
+        action: 'updatePayoutEvent',
+        historyKeyId,
+        updates: {
+          clientName: updates.client,
+          amount: updates.amount,
+          principalApplied: updates.principalApplied,
+          feeApplied: updates.feeApplied,
+          matchMethod: updates.description,
+          error: updates.error
+        }
+      })
+    })
+
+    const result = await response.json()
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to update transaction')
+    }
+
+    return result
+  } catch (error) {
+    console.error('Error updating payout event:', error)
+    throw error
+  }
+}

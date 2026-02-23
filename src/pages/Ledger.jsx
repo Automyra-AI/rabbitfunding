@@ -6,6 +6,7 @@ import LedgerTable from '../components/ledger/LedgerTable'
 import LedgerFilters from '../components/ledger/LedgerFilters'
 import TransactionModal from '../components/ledger/TransactionModal'
 import { formatCurrency, formatDate, formatDateForCSV, parseDate } from '../utils/calculations'
+import { updatePayoutEvent } from '../services/googleSheets'
 import { BookOpen } from 'lucide-react'
 
 const Ledger = () => {
@@ -164,21 +165,19 @@ const Ledger = () => {
     alert('Report saved successfully!')
   }
 
-  const handleTransactionSave = (updatedTransaction) => {
-    // Save edits to localStorage for persistence
-    const edits = JSON.parse(localStorage.getItem('ledgerEdits') || '{}')
-    edits[updatedTransaction.history_keyid] = {
+  const handleTransactionSave = async (updatedTransaction) => {
+    // Update Google Sheet via Apps Script
+    await updatePayoutEvent(updatedTransaction.history_keyid, {
       client: updatedTransaction.client,
       amount: updatedTransaction.amount,
       principalApplied: updatedTransaction.principalApplied,
       feeApplied: updatedTransaction.feeApplied,
       description: updatedTransaction.description,
-      error: updatedTransaction.error,
-      notes: updatedTransaction.notes,
-      editedAt: new Date().toISOString()
-    }
-    localStorage.setItem('ledgerEdits', JSON.stringify(edits))
-    setSelectedTransaction(null)
+      error: updatedTransaction.error
+    })
+
+    // Refetch data so the table reflects changes
+    refetch()
   }
 
   if (loading) {
