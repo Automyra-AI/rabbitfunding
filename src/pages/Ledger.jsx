@@ -4,6 +4,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
 import LedgerTable from '../components/ledger/LedgerTable'
 import LedgerFilters from '../components/ledger/LedgerFilters'
+import TransactionModal from '../components/ledger/TransactionModal'
 import { formatCurrency, formatDate, formatDateForCSV, parseDate } from '../utils/calculations'
 import { BookOpen } from 'lucide-react'
 
@@ -13,6 +14,7 @@ const Ledger = () => {
   const [dateRange, setDateRange] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [selectedTransaction, setSelectedTransaction] = useState(null)
 
   const transactions = useMemo(() => {
     const mapped = payoutEvents.map((event, index) => {
@@ -162,6 +164,23 @@ const Ledger = () => {
     alert('Report saved successfully!')
   }
 
+  const handleTransactionSave = (updatedTransaction) => {
+    // Save edits to localStorage for persistence
+    const edits = JSON.parse(localStorage.getItem('ledgerEdits') || '{}')
+    edits[updatedTransaction.history_keyid] = {
+      client: updatedTransaction.client,
+      amount: updatedTransaction.amount,
+      principalApplied: updatedTransaction.principalApplied,
+      feeApplied: updatedTransaction.feeApplied,
+      description: updatedTransaction.description,
+      error: updatedTransaction.error,
+      notes: updatedTransaction.notes,
+      editedAt: new Date().toISOString()
+    }
+    localStorage.setItem('ledgerEdits', JSON.stringify(edits))
+    setSelectedTransaction(null)
+  }
+
   if (loading) {
     return <LoadingSpinner text="Loading ledger data..." />
   }
@@ -253,7 +272,19 @@ const Ledger = () => {
         onSaveReport={handleSaveReport}
       />
 
-      <LedgerTable transactions={filteredTransactions} />
+      <LedgerTable
+        transactions={filteredTransactions}
+        onRowClick={setSelectedTransaction}
+      />
+
+      {/* Transaction Edit Modal */}
+      {selectedTransaction && (
+        <TransactionModal
+          transaction={selectedTransaction}
+          onClose={() => setSelectedTransaction(null)}
+          onSave={handleTransactionSave}
+        />
+      )}
     </div>
   )
 }

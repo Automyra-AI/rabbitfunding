@@ -4,7 +4,7 @@ import { formatCurrency, formatDate } from '../../utils/calculations'
 
 const ITEMS_PER_PAGE = 50
 
-const LedgerTable = ({ transactions }) => {
+const LedgerTable = ({ transactions, onRowClick }) => {
   const [currentPage, setCurrentPage] = useState(1)
 
   const totalPages = Math.ceil(transactions.length / ITEMS_PER_PAGE)
@@ -65,7 +65,11 @@ const LedgerTable = ({ transactions }) => {
             {paginatedTransactions.map((transaction) => {
               const hasError = transaction.error && transaction.error.trim() !== ''
               return (
-                <tr key={transaction.id} className={`hover:bg-gray-50 transition-colors ${getRowClass(transaction)}`}>
+                <tr
+                  key={transaction.id}
+                  onClick={() => onRowClick?.(transaction)}
+                  className={`hover:bg-orange-50/50 transition-colors cursor-pointer ${getRowClass(transaction)}`}
+                >
                   <td className="px-2 py-2 hidden lg:table-cell">
                     <div className="flex items-center space-x-1">
                       {hasError ? (
