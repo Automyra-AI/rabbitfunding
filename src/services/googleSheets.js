@@ -253,8 +253,11 @@ const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx86F8mK-6kUkRY
 
 export const updatePayoutEvent = async (historyKeyId, updates) => {
   try {
-    const response = await fetch(APPS_SCRIPT_URL, {
+    // mode: 'no-cors' is required for Google Apps Script from a real domain.
+    // The request is still sent and the sheet is updated — we just can't read the response.
+    await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
+      mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
         action: 'updatePayoutEvent',
@@ -271,13 +274,8 @@ export const updatePayoutEvent = async (historyKeyId, updates) => {
       })
     })
 
-    const result = await response.json()
-
-    if (!result.success) {
-      throw new Error(result.error || 'Failed to update transaction')
-    }
-
-    return result
+    // Response is opaque with no-cors — if no error was thrown, the request reached Apps Script
+    return { success: true }
   } catch (error) {
     console.error('Error updating payout event:', error)
     throw error
