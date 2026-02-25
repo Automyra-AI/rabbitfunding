@@ -194,6 +194,11 @@ export const fetchPayoutEvents = async () => {
         // Check if this Debit's History Key ID has a matching Settlement Reference Key ID
         const isSettledByMatch = historyKeyId && settledHistoryKeyIds.has(historyKeyId)
 
+        // Column R (index 17) = Manual Status Override set by user in modal
+        const manualStatusOverride = (row[17] || '').toLowerCase().trim()
+        const isSettledByOverride = manualStatusOverride === 'settled'
+        const isSettledFinal = isSettledByMatch || isSettledByOverride
+
         return {
           // Unique ID for React key
           id: index + 1,
@@ -217,10 +222,10 @@ export const fetchPayoutEvents = async () => {
           transaction_type: row[15] || '',
           reference_key_id: row[16] || '',
 
-          // Payment status - Pending until matching Settlement comes
-          isPending: !isSettledByMatch,
-          isSettled: isSettledByMatch,
-          paymentStatus: isSettledByMatch ? 'settled' : 'pending',
+          // Payment status - auto-detected by matching Settlement OR manually overridden in column R
+          isPending: !isSettledFinal,
+          isSettled: isSettledFinal,
+          paymentStatus: isSettledFinal ? 'settled' : 'pending',
 
           // For Ledger table display - exact values
           date: row[8] || '',
@@ -244,15 +249,11 @@ export const fetchPayoutEvents = async () => {
 }
 
 // Update a transaction in the Payout Events sheet via Google Apps Script Web App
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx86F8mK-6kUkRYKIJD3kQbUuFK02_wj0sPs0iyE86hNomaP2PCiC7iI4ZTyHf6aSw/exec'
+
 export const updatePayoutEvent = async (historyKeyId, updates) => {
-  const webAppUrl = import.meta.env.VITE_GOOGLE_APPS_SCRIPT_URL
-
-  if (!webAppUrl) {
-    throw new Error('Google Apps Script URL not configured. Add VITE_GOOGLE_APPS_SCRIPT_URL to your .env file.')
-  }
-
   try {
-    const response = await fetch(webAppUrl, {
+    const response = await fetch(APPS_SCRIPT_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify({
@@ -264,7 +265,8 @@ export const updatePayoutEvent = async (historyKeyId, updates) => {
           principalApplied: updates.principalApplied,
           feeApplied: updates.feeApplied,
           matchMethod: updates.description,
-          error: updates.error
+          error: updates.error,
+          status: updates.status   // 'Settled' or 'Pending' → written to column R
         }
       })
     })

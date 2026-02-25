@@ -10,7 +10,8 @@ const TransactionModal = ({ transaction, onClose, onSave }) => {
     feeApplied: 0,
     description: '',
     error: '',
-    notes: ''
+    notes: '',
+    status: 'Pending'
   })
   const [saving, setSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState(null) // 'success' | 'error' | null
@@ -25,7 +26,8 @@ const TransactionModal = ({ transaction, onClose, onSave }) => {
         feeApplied: transaction.feeApplied || 0,
         description: transaction.description || '',
         error: transaction.error || '',
-        notes: transaction.notes || ''
+        notes: transaction.notes || '',
+        status: transaction.isSettled ? 'Settled' : 'Pending'
       })
     }
   }, [transaction])
@@ -52,9 +54,10 @@ const TransactionModal = ({ transaction, onClose, onSave }) => {
     }
   }
 
-  const statusConfig = transaction.isSettled
-    ? { label: 'Settled', color: 'green', icon: BadgeCheck, bgClass: 'bg-green-50 border-green-200', textClass: 'text-green-700', badgeClass: 'bg-green-100 text-green-800' }
-    : { label: 'Pending', color: 'amber', icon: Clock, bgClass: 'bg-amber-50 border-amber-200', textClass: 'text-amber-700', badgeClass: 'bg-amber-100 text-amber-800' }
+  const isCurrentlySettled = formData.status === 'Settled'
+  const statusConfig = isCurrentlySettled
+    ? { label: 'Settled', icon: BadgeCheck, bgClass: 'bg-green-50 border-green-200', textClass: 'text-green-700', badgeClass: 'bg-green-100 text-green-800', iconBg: 'bg-green-200' }
+    : { label: 'Pending', icon: Clock, bgClass: 'bg-amber-50 border-amber-200', textClass: 'text-amber-700', badgeClass: 'bg-amber-100 text-amber-800', iconBg: 'bg-amber-200' }
 
   const StatusIcon = statusConfig.icon
 
@@ -76,7 +79,7 @@ const TransactionModal = ({ transaction, onClose, onSave }) => {
           <div className={`px-5 py-4 border-b ${statusConfig.bgClass}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className={`p-2 rounded-lg ${transaction.isSettled ? 'bg-green-200' : 'bg-amber-200'}`}>
+                <div className={`p-2 rounded-lg ${statusConfig.iconBg}`}>
                   <StatusIcon className={`h-5 w-5 ${statusConfig.textClass}`} />
                 </div>
                 <div>
@@ -116,6 +119,45 @@ const TransactionModal = ({ transaction, onClose, onSave }) => {
                 </div>
                 <p className="text-sm font-semibold text-gray-900 font-mono">{transaction.history_keyid || '-'}</p>
               </div>
+            </div>
+
+            {/* Status Toggle */}
+            <div>
+              <label className="flex items-center space-x-1.5 mb-2">
+                <BadgeCheck className="h-3.5 w-3.5 text-gray-400" />
+                <span className="text-xs font-medium text-gray-500 uppercase">Transaction Status</span>
+              </label>
+              <div className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 bg-gray-50">
+                <button
+                  type="button"
+                  onClick={() => handleChange('status', 'Pending')}
+                  className={`flex-1 flex items-center justify-center space-x-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
+                    formData.status === 'Pending'
+                      ? 'bg-amber-500 text-white shadow-md'
+                      : 'bg-white text-gray-500 border border-gray-300 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-300'
+                  }`}
+                >
+                  <Clock className="h-4 w-4" />
+                  <span>Pending</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleChange('status', 'Settled')}
+                  className={`flex-1 flex items-center justify-center space-x-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
+                    formData.status === 'Settled'
+                      ? 'bg-green-500 text-white shadow-md'
+                      : 'bg-white text-gray-500 border border-gray-300 hover:bg-green-50 hover:text-green-600 hover:border-green-300'
+                  }`}
+                >
+                  <BadgeCheck className="h-4 w-4" />
+                  <span>Settled</span>
+                </button>
+              </div>
+              {formData.status !== (transaction.isSettled ? 'Settled' : 'Pending') && (
+                <p className="text-xs text-orange-600 mt-1 font-medium">
+                  Status will be manually overridden in Google Sheet (column R)
+                </p>
+              )}
             </div>
 
             {/* Editable Fields */}

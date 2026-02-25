@@ -5,7 +5,7 @@ import ErrorMessage from '../components/ErrorMessage'
 import LedgerTable from '../components/ledger/LedgerTable'
 import LedgerFilters from '../components/ledger/LedgerFilters'
 import TransactionModal from '../components/ledger/TransactionModal'
-import { formatCurrency, formatDate, formatDateForCSV, parseDate } from '../utils/calculations'
+import { formatCurrency, formatDateForCSV, parseDate } from '../utils/calculations'
 import { updatePayoutEvent } from '../services/googleSheets'
 import { BookOpen } from 'lucide-react'
 
@@ -173,10 +173,11 @@ const Ledger = () => {
       principalApplied: updatedTransaction.principalApplied,
       feeApplied: updatedTransaction.feeApplied,
       description: updatedTransaction.description,
-      error: updatedTransaction.error
+      error: updatedTransaction.error,
+      status: updatedTransaction.status  // 'Settled' or 'Pending' → written to sheet column R
     })
 
-    // Refetch data so the table reflects changes
+    // Refetch data so the table reflects updated status
     refetch()
   }
 
