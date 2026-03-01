@@ -5,23 +5,49 @@ import ErrorMessage from '../components/ErrorMessage'
 import LedgerTable from '../components/ledger/LedgerTable'
 import LedgerFilters from '../components/ledger/LedgerFilters'
 import TransactionModal from '../components/ledger/TransactionModal'
-import { formatCurrency, formatDateForCSV, parseDate } from '../utils/calculations'
+import { formatCurrency, formatDateForCSV, parseDate, getProjectedCompletionDate } from '../utils/calculations'
 import { updatePayoutEvent } from '../services/googleSheets'
 import { BookOpen } from 'lucide-react'
 
 const Ledger = () => {
-  const { payoutEvents, stats, loading, error, refetch } = useData()
+  const { payoutEvents, deals, stats, loading, error, refetch } = useData()
   const [accountType, setAccountType] = useState('available')
   const [dateRange, setDateRange] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedTransaction, setSelectedTransaction] = useState(null)
 
+  // Build projected completion date per client from deal data
+  const dealCompletionMap = useMemo(() => {
+    const map = {}
+    if (!deals || deals.length === 0) return map
+
+    // Calculate avg payment per client from actual payout events (fallback)
+    const clientAvgPayment = {}
+    payoutEvents.forEach(event => {
+      const key = (event.client_name || '').toLowerCase().trim()
+      if (!clientAvgPayment[key]) clientAvgPayment[key] = { total: 0, count: 0 }
+      if (event.amount > 0) {
+        clientAvgPayment[key].total += event.amount
+        clientAvgPayment[key].count += 1
+      }
+    })
+
+    deals.forEach(deal => {
+      const key = (deal.client_name || '').toLowerCase().trim()
+      const avg = clientAvgPayment[key]
+      const avgPayment = avg && avg.count > 0 ? avg.total / avg.count : 0
+      map[key] = getProjectedCompletionDate(deal, avgPayment)
+    })
+
+    return map
+  }, [deals, payoutEvents])
+
   const transactions = useMemo(() => {
     const mapped = payoutEvents.map((event, index) => {
       const dateStr = event.transaction_date || event.date || ''
-      // Pre-compute timestamp for reliable sorting
       const timestamp = parseDate(dateStr).getTime()
+      const clientKey = (event.client_name || '').toLowerCase().trim()
       return {
         id: index + 1,
         history_keyid: event.history_keyid || '',
@@ -38,14 +64,14 @@ const Ledger = () => {
         transaction_type: event.transaction_type || '',
         isPending: event.isPending || false,
         isSettled: event.isSettled || false,
-        paymentStatus: event.paymentStatus || 'unknown'
+        paymentStatus: event.paymentStatus || 'unknown',
+        projectedCompletion: dealCompletionMap[clientKey] || null
       }
     })
 
     // Sort strictly by date - LATEST first, all transactions mixed together
     mapped.sort((a, b) => {
       const diff = b._timestamp - a._timestamp
-      // If same date, sort by History Key ID descending (newest transaction first)
       if (diff === 0) {
         return (b.history_keyid || '').localeCompare(a.history_keyid || '')
       }
@@ -53,7 +79,7 @@ const Ledger = () => {
     })
 
     return mapped
-  }, [payoutEvents])
+  }, [payoutEvents, dealCompletionMap])
 
   const transactionsWithBalance = useMemo(() => {
     // Calculate running balance: oldest to newest, then display newest first

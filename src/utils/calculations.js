@@ -217,3 +217,40 @@ export const getStatusBadgeClass = (status) => {
 export const getProgressBarClass = (percentage) => {
   return percentage >= 100 ? 'progress-bar-fill-complete' : 'progress-bar-fill-partial'
 }
+
+// Add N business days (Mon-Fri) to a date, skipping weekends
+export const addBusinessDays = (startDate, businessDays) => {
+  const result = new Date(startDate)
+  let added = 0
+  const days = Math.ceil(businessDays)
+  while (added < days) {
+    result.setDate(result.getDate() + 1)
+    const day = result.getDay()
+    if (day !== 0 && day !== 6) added++ // Skip Sunday(0) and Saturday(6)
+  }
+  return result
+}
+
+// Calculate projected completion date for a deal based on remaining balance and payment amount
+// deal: the deal object from Deals sheet
+// avgPaymentOverride: fallback avg calculated from actual payout events for this client
+export const getProjectedCompletionDate = (deal, avgPaymentOverride = null) => {
+  if (!deal) return null
+
+  const remaining = Math.max(0,
+    (deal.receivables_purchased_amount || 0) - (deal.principal_collected || 0)
+  )
+  if (remaining <= 0) return null // Already fully paid off
+
+  // Use best available daily payment amount:
+  // 1. expected_amount from deal  2. last_payment_amount  3. avg from actual transactions
+  const dailyPayment =
+    (deal.expected_amount > 0 ? deal.expected_amount :
+     deal.last_payment_amount > 0 ? deal.last_payment_amount :
+     avgPaymentOverride) || 0
+
+  if (dailyPayment <= 0) return null
+
+  const businessDaysLeft = Math.ceil(remaining / dailyPayment)
+  return addBusinessDays(new Date(), businessDaysLeft)
+}

@@ -1,6 +1,11 @@
 import { useState } from 'react'
-import { CheckCircle, AlertCircle, Clock, BadgeCheck } from 'lucide-react'
+import { CheckCircle, AlertCircle, Clock, BadgeCheck, CalendarCheck } from 'lucide-react'
 import { formatCurrency, formatDate } from '../../utils/calculations'
+
+const formatCompletionDate = (date) => {
+  if (!date) return null
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(date)
+}
 
 const ITEMS_PER_PAGE = 50
 
@@ -59,6 +64,7 @@ const LedgerTable = ({ transactions, onRowClick }) => {
               <th className="px-2 py-2 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 hidden md:table-cell">Fee</th>
               <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 hidden xl:table-cell">Match</th>
               <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 hidden lg:table-cell">Error</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 hidden xl:table-cell">Est. Completion</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -94,13 +100,23 @@ const LedgerTable = ({ transactions, onRowClick }) => {
                   <td className="px-2 py-2 text-xs text-red-600 hidden lg:table-cell">
                     <span className="block truncate max-w-[100px]">{transaction.error || '-'}</span>
                   </td>
+                  <td className="px-2 py-2 hidden xl:table-cell">
+                    {transaction.projectedCompletion ? (
+                      <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap">
+                        <CalendarCheck className="h-3 w-3 flex-shrink-0" />
+                        <span>{formatCompletionDate(transaction.projectedCompletion)}</span>
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
+                  </td>
                 </tr>
               )
             })}
 
             {paginatedTransactions.length === 0 && (
               <tr>
-                <td colSpan="9" className="px-3 py-8 text-center text-gray-500">
+                <td colSpan="10" className="px-3 py-8 text-center text-gray-500">
                   No transactions found
                 </td>
               </tr>
