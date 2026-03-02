@@ -64,7 +64,7 @@ const LedgerTable = ({ transactions, onRowClick }) => {
               <th className="px-2 py-2 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 hidden md:table-cell">Fee</th>
               <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 hidden xl:table-cell">Match</th>
               <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 hidden lg:table-cell">Error</th>
-              <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 hidden xl:table-cell">Est. Completion</th>
+              <th className="px-2 py-2 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 hidden lg:table-cell">Settlement / Est. Completion</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -100,8 +100,15 @@ const LedgerTable = ({ transactions, onRowClick }) => {
                   <td className="px-2 py-2 text-xs text-red-600 hidden lg:table-cell">
                     <span className="block truncate max-w-[100px]">{transaction.error || '-'}</span>
                   </td>
-                  <td className="px-2 py-2 hidden xl:table-cell">
-                    {transaction.projectedCompletion ? (
+                  <td className="px-2 py-2 hidden lg:table-cell">
+                    {transaction.isSettled && transaction.settlementDate ? (
+                      // Settled → show the actual date the settlement came in
+                      <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200 whitespace-nowrap">
+                        <CalendarCheck className="h-3 w-3 flex-shrink-0" />
+                        <span>{formatDate(transaction.settlementDate)}</span>
+                      </span>
+                    ) : transaction.isPending && transaction.projectedCompletion ? (
+                      // Pending → show projected business day completion date
                       <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 whitespace-nowrap">
                         <CalendarCheck className="h-3 w-3 flex-shrink-0" />
                         <span>{formatCompletionDate(transaction.projectedCompletion)}</span>

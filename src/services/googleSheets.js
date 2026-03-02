@@ -164,18 +164,19 @@ export const fetchPayoutEvents = async () => {
 
     // STEP 1: Collect all Reference Key IDs from "Check Settlement" transactions
     // Match logic: Check Debit's History Key ID == Check Settlement's Reference Key ID
-    const settledHistoryKeyIds = new Set()
+    // Map: referenceKeyId -> settlement transaction_date (row[8])
+    const settledDateMap = new Map()
     rows.slice(1).forEach(row => {
       const transactionType = (row[15] || '').toLowerCase().trim()
       const isSettlement = transactionType.includes('settlement') || transactionType.includes('settl')
       const referenceKeyId = (row[16] || '').trim()
 
       if (isSettlement && referenceKeyId) {
-        settledHistoryKeyIds.add(referenceKeyId)
+        settledDateMap.set(referenceKeyId, row[8] || '') // store the settlement date
       }
     })
 
-    console.log(`Found ${settledHistoryKeyIds.size} settled Reference Key IDs`)
+    console.log(`Found ${settledDateMap.size} settled Reference Key IDs`)
 
     // STEP 2: Map transactions - Only show Check Debits, hide Check Settlements
     // Mark Debit as Settled if its History Key ID matches any Settlement's Reference Key ID
@@ -192,7 +193,8 @@ export const fetchPayoutEvents = async () => {
         const historyKeyId = (row[0] || '').trim()
 
         // Check if this Debit's History Key ID has a matching Settlement Reference Key ID
-        const isSettledByMatch = historyKeyId && settledHistoryKeyIds.has(historyKeyId)
+        const isSettledByMatch = historyKeyId && settledDateMap.has(historyKeyId)
+        const settlementDate = isSettledByMatch ? settledDateMap.get(historyKeyId) : ''
 
         // Column R (index 17) = Manual Status Override set by user in modal
         const manualStatusOverride = (row[17] || '').toLowerCase().trim()
@@ -226,6 +228,7 @@ export const fetchPayoutEvents = async () => {
           isPending: !isSettledFinal,
           isSettled: isSettledFinal,
           paymentStatus: isSettledFinal ? 'settled' : 'pending',
+          settlementDate: settlementDate || '', // actual date the matching Check Settlement came in
 
           // For Ledger table display - exact values
           date: row[8] || '',

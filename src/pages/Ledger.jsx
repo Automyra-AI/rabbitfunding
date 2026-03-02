@@ -65,6 +65,7 @@ const Ledger = () => {
         isPending: event.isPending || false,
         isSettled: event.isSettled || false,
         paymentStatus: event.paymentStatus || 'unknown',
+        settlementDate: event.settlementDate || '',
         projectedCompletion: dealCompletionMap[clientKey] || null
       }
     })
