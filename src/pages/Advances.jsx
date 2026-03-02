@@ -26,7 +26,8 @@ const Advances = () => {
     totalTransactions: true,
     remainingTransactions: true,
     outstanding: true,
-    dateFunded: true
+    dateFunded: true,
+    payoffDate: true
   })
 
   const filteredDeals = useMemo(() => {

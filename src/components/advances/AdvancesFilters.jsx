@@ -29,7 +29,8 @@ const AdvancesFilters = ({
     { key: 'totalTransactions', label: 'Total Transactions' },
     { key: 'remainingTransactions', label: 'Remaining Transactions' },
     { key: 'outstanding', label: 'Remaining Balance' },
-    { key: 'dateFunded', label: 'Date Funded' }
+    { key: 'dateFunded', label: 'Date Funded' },
+    { key: 'payoffDate', label: 'Est. Payoff Date' }
   ]
 
   const toggleColumn = (key) => {

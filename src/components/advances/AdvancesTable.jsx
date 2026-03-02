@@ -1,13 +1,6 @@
 import { useState, useMemo } from 'react'
-import { ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from 'lucide-react'
-import {
-  formatCurrency,
-  formatPercentage,
-  formatDate,
-  getStatusBadgeClass,
-  getProgressBarClass,
-  calculatePaybackPercentage
-} from '../../utils/calculations'
+import { CalendarCheck } from 'lucide-react'
+import { formatCurrency, formatDate, addBusinessDays } from '../../utils/calculations'
 
 const ITEMS_PER_PAGE = 25
 
@@ -39,6 +32,11 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
       )
       const paymentCount = dealPayments.length
 
+      // Projected payoff = today + remaining business days (Mon-Fri only)
+      const projectedPayoffDate = remainingBalance > 0 && paymentPerTransaction > 0 && remainingTransactions > 0
+        ? addBusinessDays(new Date(), remainingTransactions)
+        : null
+
       return {
         ...deal,
         syndicatedAmount,
@@ -53,7 +51,8 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
         remainingTransactions,
         paymentPerTransaction,
         paidBackPercent,
-        paymentCount
+        paymentCount,
+        projectedPayoffDate
       }
     })
   }, [deals, payoutEvents])
@@ -151,6 +150,9 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
               {visibleColumns.dateFunded && (
                 <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('date_funded')}>Date</th>
               )}
+              {visibleColumns.payoffDate && (
+                <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('projectedPayoffDate')}>Est. Payoff</th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -228,6 +230,23 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
                 {visibleColumns.dateFunded && (
                   <td className="px-3 py-2.5 whitespace-nowrap text-sm text-gray-600">{formatDate(deal.date_funded)}</td>
                 )}
+                {visibleColumns.payoffDate && (
+                  <td className="px-3 py-2.5 whitespace-nowrap">
+                    {deal.remainingBalance <= 0 ? (
+                      <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700 border border-green-200">
+                        <CalendarCheck className="h-3 w-3 flex-shrink-0" />
+                        <span>Paid Off</span>
+                      </span>
+                    ) : deal.projectedPayoffDate ? (
+                      <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                        <CalendarCheck className="h-3 w-3 flex-shrink-0" />
+                        <span>{new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).format(deal.projectedPayoffDate)}</span>
+                      </span>
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
+                  </td>
+                )}
               </tr>
             ))}
 
@@ -267,6 +286,7 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
                 <td className="px-3 py-3 text-sm text-right text-red-600 font-bold">{formatCurrency(totals.remainingBalance)}</td>
               )}
               {visibleColumns.dateFunded && <td className="px-3 py-3"></td>}
+              {visibleColumns.payoffDate && <td className="px-3 py-3"></td>}
             </tr>
           </tbody>
         </table>
