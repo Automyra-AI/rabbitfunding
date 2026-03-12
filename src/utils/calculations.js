@@ -261,9 +261,13 @@ export const applyWaterfallVerification = (deals, payoutEvents) => {
 
     const principalAdvanced = deal.purchase_price || deal.principal_advanced || 0
 
-    // Separate settled vs pending debits
-    const settledEvents = events.filter(e => e.isSettled)
-    const pendingEvents = events.filter(e => !e.isSettled)
+    // Skip confirmation rows (rows with Reference Key ID) — they confirm other rows, not debits themselves
+    const debitEvents = events.filter(e => !e.isConfirmationRow)
+    const confirmationEvents = events.filter(e => e.isConfirmationRow)
+
+    // Separate settled vs pending debits (only from non-confirmation rows)
+    const settledEvents = debitEvents.filter(e => e.isSettled)
+    const pendingEvents = debitEvents.filter(e => !e.isSettled)
 
     // Sort settled debits oldest first for correct waterfall accumulation
     const sorted = [...settledEvents].sort((a, b) => {
@@ -307,14 +311,24 @@ export const applyWaterfallVerification = (deals, payoutEvents) => {
 
     const isPaidOff = cumulativePrincipal >= principalAdvanced
 
+    // Mark confirmation rows as $0 (they're not debits)
+    confirmationEvents.forEach(event => {
+      verifiedEventMap.set(event.id, {
+        principalApplied: 0,
+        feeApplied: 0,
+        cumulativePrincipal,
+        cumulativeFee
+      })
+    })
+
     verifiedDealStats[clientKey] = {
       principal_collected: Math.round(cumulativePrincipal * 100) / 100,
       fee_collected: Math.round(cumulativeFee * 100) / 100,
       status: isPaidOff ? 'PaidOff' : (deal.status || 'Active'),
-      totalDebits: events.length,
+      totalDebits: debitEvents.length,
       settledDebits: settledEvents.length,
       pendingDebits: pendingEvents.length,
-      totalAmount: events.reduce((s, e) => s + (e.amount || 0), 0),
+      totalAmount: debitEvents.reduce((s, e) => s + (e.amount || 0), 0),
       settledAmount: settledEvents.reduce((s, e) => s + (e.amount || 0), 0)
     }
   }

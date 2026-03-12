@@ -162,37 +162,27 @@ export const fetchPayoutEvents = async () => {
     // 15: Transaction Type (Check Debit / Check Settlement)
     // 16: Reference Key ID (used by Check Settlement to match with Check Debit's History Key ID)
 
-    // STEP 1: Collect all Reference Key IDs from "Check Settlement" transactions
-    // Match logic: Check Debit's History Key ID == Check Settlement's Reference Key ID
-    // Map: referenceKeyId -> settlement transaction_date (row[8])
+    // STEP 1: Build a map of all Reference Key IDs → settlement date
+    // Any row with a Reference Key ID is a settlement confirmation for that ref key
+    // If a row's History Key ID appears as someone else's Reference Key ID → it's settled
     const settledDateMap = new Map()
     rows.slice(1).forEach(row => {
-      const transactionType = (row[15] || '').toLowerCase().trim()
-      const isSettlement = transactionType.includes('settlement') || transactionType.includes('settl')
       const referenceKeyId = (row[16] || '').trim()
-
-      if (isSettlement && referenceKeyId) {
-        settledDateMap.set(referenceKeyId, row[8] || '') // store the settlement date
+      if (referenceKeyId) {
+        settledDateMap.set(referenceKeyId, row[8] || '')
       }
     })
 
     console.log(`Found ${settledDateMap.size} settled Reference Key IDs`)
 
-    // STEP 2: Map transactions - Only show Check Debits, hide Check Settlements
-    // Mark Debit as Settled if its History Key ID matches any Settlement's Reference Key ID
+    // STEP 2: Map ALL rows — show everything in ledger
+    // Settled = this row's History Key ID is referenced by another row's Reference Key ID
     const events = rows.slice(1)
       .map((row, index) => {
-        const transactionType = (row[15] || '').toLowerCase().trim()
-        const isSettlement = transactionType.includes('settlement') || transactionType.includes('settl')
-
-        // Skip ALL Check Settlement transactions - only show Debits in Ledger
-        if (isSettlement) {
-          return null
-        }
-
         const historyKeyId = (row[0] || '').trim()
+        const referenceKeyId = (row[16] || '').trim()
 
-        // Check if this Debit's History Key ID has a matching Settlement Reference Key ID
+        // Is this row settled? Its History Key ID matches another row's Reference Key ID
         const isSettledByMatch = historyKeyId && settledDateMap.has(historyKeyId)
         const settlementDate = isSettledByMatch ? settledDateMap.get(historyKeyId) : ''
 
@@ -200,6 +190,10 @@ export const fetchPayoutEvents = async () => {
         const manualStatusOverride = (row[17] || '').toLowerCase().trim()
         const isSettledByOverride = manualStatusOverride === 'settled'
         const isSettledFinal = isSettledByMatch || isSettledByOverride
+
+        // Rows that have a Reference Key ID are settlement confirmations
+        // They confirm another row but are not debits themselves
+        const isConfirmationRow = !!referenceKeyId
 
         return {
           // Unique ID for React key
@@ -223,14 +217,15 @@ export const fetchPayoutEvents = async () => {
           error: row[14] || '',
           transaction_type: row[15] || '',
           reference_key_id: row[16] || '',
+          isConfirmationRow,
 
-          // Payment status - auto-detected by matching Settlement OR manually overridden in column R
+          // Payment status — settled if another row's Reference Key ID matches this row's History Key ID
           isPending: !isSettledFinal,
           isSettled: isSettledFinal,
           paymentStatus: isSettledFinal ? 'settled' : 'pending',
-          settlementDate: settlementDate || '', // actual date the matching Check Settlement came in
+          settlementDate: settlementDate || '',
 
-          // For Ledger table display - exact values
+          // For Ledger table display
           date: row[8] || '',
           type: 'Credit',
           client: row[4] || '',
@@ -239,10 +234,10 @@ export const fetchPayoutEvents = async () => {
           description: row[12] || 'Payment'
         }
       })
-      .filter(event => event !== null) // Remove Check Settlement transactions
 
-    console.log('Sample payout event after mapping:', events[0])
-    console.log('Transaction dates (first 5):', events.slice(0, 5).map(e => ({ date: e.transaction_date, id: e.history_keyid, status: e.paymentStatus })))
+    console.log(`✅ Total payout events: ${events.length}`)
+    console.log('Confirmation rows (have ref key):', events.filter(e => e.isConfirmationRow).length)
+    console.log('Settled rows:', events.filter(e => e.isSettled).length)
     return events
   } catch (error) {
     console.error('Error fetching payout events from Google Sheets:', error)
