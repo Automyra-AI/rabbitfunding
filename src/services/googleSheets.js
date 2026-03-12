@@ -192,6 +192,11 @@ export const fetchPayoutEvents = async () => {
 
         const historyKeyId = (row[0] || '').trim()
 
+        // Only "Check Debit" rows are real debits that should be counted in waterfall
+        // Empty-type or unknown-type rows (e.g. orphan settlements mislabeled by Actum)
+        // are shown in ledger but NOT counted toward principal collection
+        const isCheckDebit = transactionType.includes('debit') || transactionType.includes('check debit')
+
         // Check if this Debit's History Key ID has a matching Settlement Reference Key ID
         const isSettledByMatch = historyKeyId && settledDateMap.has(historyKeyId)
         const settlementDate = isSettledByMatch ? settledDateMap.get(historyKeyId) : ''
@@ -199,7 +204,12 @@ export const fetchPayoutEvents = async () => {
         // Column R (index 17) = Manual Status Override set by user in modal
         const manualStatusOverride = (row[17] || '').toLowerCase().trim()
         const isSettledByOverride = manualStatusOverride === 'settled'
-        const isSettledFinal = isSettledByMatch || isSettledByOverride
+
+        // Only real Check Debits can be settled — unknown-type rows stay pending
+        // unless manually overridden by the user
+        const isSettledFinal = isCheckDebit
+          ? (isSettledByMatch || isSettledByOverride)
+          : isSettledByOverride  // non-debit rows only count if manually marked
 
         return {
           // Unique ID for React key
@@ -223,6 +233,7 @@ export const fetchPayoutEvents = async () => {
           error: row[14] || '',
           transaction_type: row[15] || '',
           reference_key_id: row[16] || '',
+          isCheckDebit,
 
           // Payment status - auto-detected by matching Settlement OR manually overridden in column R
           isPending: !isSettledFinal,
@@ -242,8 +253,12 @@ export const fetchPayoutEvents = async () => {
       .filter(event => event !== null) // Remove Check Settlement transactions
 
     console.log('Sample payout event after mapping:', events[0])
-    // Log first 5 transaction dates for debugging sort order
-    console.log('Transaction dates (first 5):', events.slice(0, 5).map(e => ({ date: e.transaction_date, id: e.history_keyid, status: e.paymentStatus })))
+    // Log non-debit rows for debugging (empty/unknown transaction types that weren't filtered)
+    const nonDebitRows = events.filter(e => !e.isCheckDebit)
+    if (nonDebitRows.length > 0) {
+      console.log(`⚠️ ${nonDebitRows.length} non-debit rows kept in ledger (not counted in waterfall):`,
+        nonDebitRows.map(e => ({ id: e.history_keyid, client: e.client_name, type: e.transaction_type, amount: e.amount, settled: e.isSettled })))
+    }
     return events
   } catch (error) {
     console.error('Error fetching payout events from Google Sheets:', error)
