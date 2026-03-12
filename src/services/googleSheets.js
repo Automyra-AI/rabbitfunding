@@ -191,15 +191,8 @@ export const fetchPayoutEvents = async () => {
         const isSettledByOverride = manualStatusOverride === 'settled'
         const isSettledFinal = isSettledByMatch || isSettledByOverride
 
-        // Rows that have a Reference Key ID are settlement confirmations
-        // They confirm another row but are not debits themselves
-        const isConfirmationRow = !!referenceKeyId
-
         return {
-          // Unique ID for React key
           id: index + 1,
-
-          // Exact values from sheet columns
           history_keyid: row[0] || '',
           order_id: row[1] || '',
           sub_id: row[2] || '',
@@ -217,9 +210,8 @@ export const fetchPayoutEvents = async () => {
           error: row[14] || '',
           transaction_type: row[15] || '',
           reference_key_id: row[16] || '',
-          isConfirmationRow,
 
-          // Payment status — settled if another row's Reference Key ID matches this row's History Key ID
+          // Settled = another row's Reference Key ID matches this row's History Key ID
           isPending: !isSettledFinal,
           isSettled: isSettledFinal,
           paymentStatus: isSettledFinal ? 'settled' : 'pending',
@@ -235,9 +227,7 @@ export const fetchPayoutEvents = async () => {
         }
       })
 
-    console.log(`✅ Total payout events: ${events.length}`)
-    console.log('Confirmation rows (have ref key):', events.filter(e => e.isConfirmationRow).length)
-    console.log('Settled rows:', events.filter(e => e.isSettled).length)
+    console.log(`✅ Total payout events: ${events.length}, Settled: ${events.filter(e => e.isSettled).length}, Pending: ${events.filter(e => e.isPending).length}`)
     return events
   } catch (error) {
     console.error('Error fetching payout events from Google Sheets:', error)
