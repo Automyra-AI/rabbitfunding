@@ -162,9 +162,8 @@ export const fetchPayoutEvents = async () => {
     // 15: Transaction Type (Check Debit / Check Settlement)
     // 16: Reference Key ID (used by Check Settlement to match with Check Debit's History Key ID)
 
-    // STEP 1: Build a map of all Reference Key IDs → settlement date
-    // Any row with a Reference Key ID is a settlement confirmation for that ref key
-    // If a row's History Key ID appears as someone else's Reference Key ID → it's settled
+    // STEP 1: Build set of all Reference Key IDs (these are settlement confirmations)
+    // If a Debit's History Key ID is in this set → that Debit is Settled
     const settledDateMap = new Map()
     rows.slice(1).forEach(row => {
       const referenceKeyId = (row[16] || '').trim()
@@ -173,20 +172,21 @@ export const fetchPayoutEvents = async () => {
       }
     })
 
-    console.log(`Found ${settledDateMap.size} settled Reference Key IDs`)
-
-    // STEP 2: Map ALL rows — show everything in ledger
-    // Settled = this row's History Key ID is referenced by another row's Reference Key ID
+    // STEP 2: Only keep Debit rows (rows WITHOUT a Reference Key ID)
+    // Rows WITH a Reference Key ID are settlement confirmations → hide them
+    // Mark Debit as Settled if its History Key ID appears in settledDateMap
     const events = rows.slice(1)
       .map((row, index) => {
-        const historyKeyId = (row[0] || '').trim()
         const referenceKeyId = (row[16] || '').trim()
 
-        // Is this row settled? Its History Key ID matches another row's Reference Key ID
+        // If this row has a Reference Key ID, it's a settlement confirmation → skip it
+        if (referenceKeyId) return null
+
+        const historyKeyId = (row[0] || '').trim()
         const isSettledByMatch = historyKeyId && settledDateMap.has(historyKeyId)
         const settlementDate = isSettledByMatch ? settledDateMap.get(historyKeyId) : ''
 
-        // Column R (index 17) = Manual Status Override set by user in modal
+        // Column R (index 17) = Manual Status Override
         const manualStatusOverride = (row[17] || '').toLowerCase().trim()
         const isSettledByOverride = manualStatusOverride === 'settled'
         const isSettledFinal = isSettledByMatch || isSettledByOverride
@@ -209,15 +209,13 @@ export const fetchPayoutEvents = async () => {
           auth_code: row[13] || '',
           error: row[14] || '',
           transaction_type: row[15] || '',
-          reference_key_id: row[16] || '',
+          reference_key_id: '',
 
-          // Settled = another row's Reference Key ID matches this row's History Key ID
           isPending: !isSettledFinal,
           isSettled: isSettledFinal,
           paymentStatus: isSettledFinal ? 'settled' : 'pending',
           settlementDate: settlementDate || '',
 
-          // For Ledger table display
           date: row[8] || '',
           type: 'Credit',
           client: row[4] || '',
@@ -226,8 +224,9 @@ export const fetchPayoutEvents = async () => {
           description: row[12] || 'Payment'
         }
       })
+      .filter(event => event !== null)
 
-    console.log(`✅ Total payout events: ${events.length}, Settled: ${events.filter(e => e.isSettled).length}, Pending: ${events.filter(e => e.isPending).length}`)
+    console.log(`✅ Payout events: ${events.length}, Settled: ${events.filter(e => e.isSettled).length}, Pending: ${events.filter(e => e.isPending).length}`)
     return events
   } catch (error) {
     console.error('Error fetching payout events from Google Sheets:', error)
