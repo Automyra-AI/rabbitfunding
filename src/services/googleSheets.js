@@ -178,38 +178,28 @@ export const fetchPayoutEvents = async () => {
 
     console.log(`Found ${settledDateMap.size} settled Reference Key IDs`)
 
-    // STEP 2: Map transactions - show Check Debits + orphan Settlements (no ref key)
-    // Skip only Settlement rows that HAVE a Reference Key ID (these are confirmation rows)
-    // Keep Settlement rows WITHOUT a Reference Key ID (orphan = actual debit mislabeled by Actum)
+    // STEP 2: Map transactions - Only show Check Debits, hide Check Settlements
+    // Mark Debit as Settled if its History Key ID matches any Settlement's Reference Key ID
     const events = rows.slice(1)
       .map((row, index) => {
         const transactionType = (row[15] || '').toLowerCase().trim()
         const isSettlement = transactionType.includes('settlement') || transactionType.includes('settl')
-        const referenceKeyId = (row[16] || '').trim()
 
-        // Only skip settlements that have a Reference Key ID (real confirmation rows)
-        // Settlements WITHOUT a ref key are orphans = actual debits mislabeled by Actum
-        if (isSettlement && referenceKeyId) {
+        // Skip ALL Check Settlement transactions - only show Debits in Ledger
+        if (isSettlement) {
           return null
         }
 
         const historyKeyId = (row[0] || '').trim()
 
-        // Check if this row's History Key ID has a matching Settlement Reference Key ID
+        // Check if this Debit's History Key ID has a matching Settlement Reference Key ID
         const isSettledByMatch = historyKeyId && settledDateMap.has(historyKeyId)
         const settlementDate = isSettledByMatch ? settledDateMap.get(historyKeyId) : ''
 
         // Column R (index 17) = Manual Status Override set by user in modal
         const manualStatusOverride = (row[17] || '').toLowerCase().trim()
         const isSettledByOverride = manualStatusOverride === 'settled'
-
-        // Orphan settlements (Settlement type but NO ref key) are kept in ledger
-        // but NOT auto-counted — they don't represent confirmed debits
-        // User can still manually mark them settled via column R override
-        const isOrphanSettlement = isSettlement && !referenceKeyId
-        const isSettledFinal = isOrphanSettlement
-          ? isSettledByOverride  // orphans only count if manually marked
-          : (isSettledByMatch || isSettledByOverride)
+        const isSettledFinal = isSettledByMatch || isSettledByOverride
 
         return {
           // Unique ID for React key
@@ -252,15 +242,7 @@ export const fetchPayoutEvents = async () => {
       .filter(event => event !== null) // Remove Check Settlement transactions
 
     console.log('Sample payout event after mapping:', events[0])
-    // Log orphan settlements kept as debits (Settlement type but no Reference Key ID)
-    const orphanSettlements = events.filter(e => {
-      const t = (e.transaction_type || '').toLowerCase()
-      return t.includes('settlement')
-    })
-    if (orphanSettlements.length > 0) {
-      console.log(`📌 ${orphanSettlements.length} orphan settlements kept as debits (no ref key):`,
-        orphanSettlements.map(e => ({ id: e.history_keyid, client: e.client_name, amount: e.amount, settled: e.isSettled })))
-    }
+    console.log('Transaction dates (first 5):', events.slice(0, 5).map(e => ({ date: e.transaction_date, id: e.history_keyid, status: e.paymentStatus })))
     return events
   } catch (error) {
     console.error('Error fetching payout events from Google Sheets:', error)
