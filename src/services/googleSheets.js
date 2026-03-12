@@ -178,26 +178,24 @@ export const fetchPayoutEvents = async () => {
 
     console.log(`Found ${settledDateMap.size} settled Reference Key IDs`)
 
-    // STEP 2: Map transactions - Only show Check Debits, hide Check Settlements
-    // Mark Debit as Settled if its History Key ID matches any Settlement's Reference Key ID
+    // STEP 2: Map transactions - show Check Debits + orphan Settlements (no ref key)
+    // Skip only Settlement rows that HAVE a Reference Key ID (these are confirmation rows)
+    // Keep Settlement rows WITHOUT a Reference Key ID (orphan = actual debit mislabeled by Actum)
     const events = rows.slice(1)
       .map((row, index) => {
         const transactionType = (row[15] || '').toLowerCase().trim()
         const isSettlement = transactionType.includes('settlement') || transactionType.includes('settl')
+        const referenceKeyId = (row[16] || '').trim()
 
-        // Skip Check Settlement transactions - only show Debits in Ledger
-        if (isSettlement) {
+        // Only skip settlements that have a Reference Key ID (real confirmation rows)
+        // Settlements WITHOUT a ref key are orphans = actual debits mislabeled by Actum
+        if (isSettlement && referenceKeyId) {
           return null
         }
 
         const historyKeyId = (row[0] || '').trim()
 
-        // Only "Check Debit" rows are real debits that should be counted in waterfall
-        // Empty-type or unknown-type rows (e.g. orphan settlements mislabeled by Actum)
-        // are shown in ledger but NOT counted toward principal collection
-        const isCheckDebit = transactionType.includes('debit') || transactionType.includes('check debit')
-
-        // Check if this Debit's History Key ID has a matching Settlement Reference Key ID
+        // Check if this row's History Key ID has a matching Settlement Reference Key ID
         const isSettledByMatch = historyKeyId && settledDateMap.has(historyKeyId)
         const settlementDate = isSettledByMatch ? settledDateMap.get(historyKeyId) : ''
 
@@ -205,11 +203,13 @@ export const fetchPayoutEvents = async () => {
         const manualStatusOverride = (row[17] || '').toLowerCase().trim()
         const isSettledByOverride = manualStatusOverride === 'settled'
 
-        // Only real Check Debits can be settled — unknown-type rows stay pending
-        // unless manually overridden by the user
-        const isSettledFinal = isCheckDebit
-          ? (isSettledByMatch || isSettledByOverride)
-          : isSettledByOverride  // non-debit rows only count if manually marked
+        // Orphan settlements (Settlement type but NO ref key) are kept in ledger
+        // but NOT auto-counted — they don't represent confirmed debits
+        // User can still manually mark them settled via column R override
+        const isOrphanSettlement = isSettlement && !referenceKeyId
+        const isSettledFinal = isOrphanSettlement
+          ? isSettledByOverride  // orphans only count if manually marked
+          : (isSettledByMatch || isSettledByOverride)
 
         return {
           // Unique ID for React key
@@ -233,7 +233,6 @@ export const fetchPayoutEvents = async () => {
           error: row[14] || '',
           transaction_type: row[15] || '',
           reference_key_id: row[16] || '',
-          isCheckDebit,
 
           // Payment status - auto-detected by matching Settlement OR manually overridden in column R
           isPending: !isSettledFinal,
@@ -253,11 +252,14 @@ export const fetchPayoutEvents = async () => {
       .filter(event => event !== null) // Remove Check Settlement transactions
 
     console.log('Sample payout event after mapping:', events[0])
-    // Log non-debit rows for debugging (empty/unknown transaction types that weren't filtered)
-    const nonDebitRows = events.filter(e => !e.isCheckDebit)
-    if (nonDebitRows.length > 0) {
-      console.log(`⚠️ ${nonDebitRows.length} non-debit rows kept in ledger (not counted in waterfall):`,
-        nonDebitRows.map(e => ({ id: e.history_keyid, client: e.client_name, type: e.transaction_type, amount: e.amount, settled: e.isSettled })))
+    // Log orphan settlements kept as debits (Settlement type but no Reference Key ID)
+    const orphanSettlements = events.filter(e => {
+      const t = (e.transaction_type || '').toLowerCase()
+      return t.includes('settlement')
+    })
+    if (orphanSettlements.length > 0) {
+      console.log(`📌 ${orphanSettlements.length} orphan settlements kept as debits (no ref key):`,
+        orphanSettlements.map(e => ({ id: e.history_keyid, client: e.client_name, amount: e.amount, settled: e.isSettled })))
     }
     return events
   } catch (error) {
