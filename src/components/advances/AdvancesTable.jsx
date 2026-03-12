@@ -262,14 +262,14 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
                   <td className="px-3 py-2.5 whitespace-nowrap text-center">
                     {deal._verified ? (
                       deal._verification?.sheetMatch ? (
-                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200" title={`${deal._verification.totalDebits} debits verified`}>
+                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200" title={`${deal._verification.settledDebits} settled, ${deal._verification.pendingDebits} pending`}>
                           <ShieldCheck className="h-3 w-3" />
-                          <span>{deal._verification.totalDebits}</span>
+                          <span>{deal._verification.settledDebits}S/{deal._verification.pendingDebits}P</span>
                         </span>
                       ) : (
-                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200" title={`Sheet: $${deal._sheet_principal_collected} → App: $${deal.principal_collected} (${deal._verification.totalDebits} debits)`}>
+                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200" title={`Sheet: $${deal._sheet_principal_collected} → App: $${deal.principal_collected} (${deal._verification.settledDebits} settled, ${deal._verification.pendingDebits} pending)`}>
                           <AlertTriangle className="h-3 w-3" />
-                          <span>Fixed</span>
+                          <span>{deal._verification.settledDebits}S/{deal._verification.pendingDebits}P</span>
                         </span>
                       )
                     ) : (

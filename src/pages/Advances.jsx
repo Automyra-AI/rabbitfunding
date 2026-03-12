@@ -138,7 +138,7 @@ const Advances = () => {
         <div className="flex items-center space-x-2 px-4 py-2 bg-green-50 rounded-lg border border-green-200">
           <ShieldCheck className="h-4 w-4 text-green-600" />
           <span className="text-xs font-medium text-gray-700">
-            Principal & fee values calculated from {filteredDeals.reduce((s, d) => s + (d._verification?.totalDebits || 0), 0)} verified Check Debit transactions (waterfall applied)
+            Waterfall applied to {filteredDeals.reduce((s, d) => s + (d._verification?.settledDebits || 0), 0)} settled transactions — {filteredDeals.reduce((s, d) => s + (d._verification?.pendingDebits || 0), 0)} pending (not counted until settlement arrives)
           </span>
           {filteredDeals.some(d => d._verified && !d._verification?.sheetMatch) && (
             <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">

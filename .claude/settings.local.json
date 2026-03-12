@@ -3,7 +3,8 @@
     "allow": [
       "Bash(curl:*)",
       "Bash(python:*)",
-      "Bash(npx vite build)"
+      "Bash(npx vite build)",
+      "Bash(node test_waterfall.cjs)"
     ]
   }
 }
