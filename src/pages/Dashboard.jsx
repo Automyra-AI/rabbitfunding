@@ -3,10 +3,20 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
 import BalanceCard from '../components/dashboard/BalanceCard'
 import PerformanceStatsCard from '../components/dashboard/PerformanceStatsCard'
-import { BarChart3, Activity } from 'lucide-react'
+import { BarChart3, Activity, ShieldCheck } from 'lucide-react'
 
 const Dashboard = () => {
-  const { stats, loading, error, refetch, lastUpdated } = useData()
+  const { stats, deals, payoutEvents, loading, error, refetch, lastUpdated } = useData()
+
+  const verificationInfo = deals.reduce((acc, deal) => {
+    if (deal._verified) {
+      acc.totalDeals++
+      acc.totalDebits += deal._verification?.totalDebits || 0
+      if (deal._verification?.sheetMatch) acc.matchCount++
+      else acc.mismatchCount++
+    }
+    return acc
+  }, { totalDeals: 0, totalDebits: 0, matchCount: 0, mismatchCount: 0 })
 
   if (loading) {
     return <LoadingSpinner text="Loading dashboard data..." />
@@ -43,6 +53,27 @@ const Dashboard = () => {
           )}
         </div>
       </div>
+
+      {/* Verification Banner */}
+      {verificationInfo.totalDeals > 0 && (
+        <div className={`flex items-center justify-between px-4 py-2 rounded-lg border ${
+          verificationInfo.mismatchCount > 0
+            ? 'bg-amber-50 border-amber-200'
+            : 'bg-green-50 border-green-200'
+        }`}>
+          <div className="flex items-center space-x-2">
+            <ShieldCheck className={`h-4 w-4 ${verificationInfo.mismatchCount > 0 ? 'text-amber-600' : 'text-green-600'}`} />
+            <span className="text-xs font-medium text-gray-700">
+              All values independently verified from {verificationInfo.totalDebits} transactions across {verificationInfo.totalDeals} deals
+            </span>
+          </div>
+          {verificationInfo.mismatchCount > 0 && (
+            <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+              {verificationInfo.mismatchCount} sheet mismatch{verificationInfo.mismatchCount > 1 ? 'es' : ''} auto-corrected
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Cards Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-3">

@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { fetchDealsData, fetchPayoutEvents } from '../services/googleSheets'
-import { calculateStats } from '../utils/calculations'
+import { calculateStats, applyWaterfallVerification } from '../utils/calculations'
 
 const DataContext = createContext()
 
@@ -30,9 +30,21 @@ export const DataProvider = ({ children }) => {
         fetchPayoutEvents()
       ])
 
-      setDeals(dealsData)
-      setPayoutEvents(eventsData)
-      setStats(calculateStats(dealsData, eventsData))
+      // Apply waterfall verification: independently calculate principal/fee
+      // from raw Check Debit transactions instead of trusting sheet values
+      const { verifiedDeals, verifiedEvents } = applyWaterfallVerification(dealsData, eventsData)
+
+      console.log('✅ Waterfall verification applied:')
+      verifiedDeals.forEach(d => {
+        if (d._verified) {
+          const match = d._verification.sheetMatch ? '✅' : '⚠️'
+          console.log(`  ${match} ${d.client_name}: App=$${d.principal_collected} | Sheet=$${d._sheet_principal_collected} | Debits=${d._verification.totalDebits}`)
+        }
+      })
+
+      setDeals(verifiedDeals)
+      setPayoutEvents(verifiedEvents)
+      setStats(calculateStats(verifiedDeals, verifiedEvents))
       setLastUpdated(new Date())
     } catch (err) {
       console.error('Error fetching data:', err)

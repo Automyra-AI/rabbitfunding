@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { CalendarCheck } from 'lucide-react'
+import { CalendarCheck, ShieldCheck, AlertTriangle } from 'lucide-react'
 import { formatCurrency, formatDate, addBusinessDays } from '../../utils/calculations'
 
 const ITEMS_PER_PAGE = 25
@@ -52,7 +52,8 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
         paymentPerTransaction,
         paidBackPercent,
         paymentCount,
-        projectedPayoffDate
+        projectedPayoffDate,
+        feeCollected: deal.fee_collected || 0
       }
     })
   }, [deals, payoutEvents])
@@ -89,8 +90,9 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
       remainingBalance: acc.remainingBalance + (deal.remainingBalance || 0),
       interest: acc.interest + (deal.interest || 0),
       totalTransactions: acc.totalTransactions + (deal.totalTransactions || 0),
-      remainingTransactions: acc.remainingTransactions + (deal.remainingTransactions || 0)
-    }), { syndicatedAmount: 0, syndicatedAmountOrigination: 0, originationFee: 0, totalPayback: 0, amountPaid: 0, remainingBalance: 0, interest: 0, totalTransactions: 0, remainingTransactions: 0 })
+      remainingTransactions: acc.remainingTransactions + (deal.remainingTransactions || 0),
+      feeCollected: acc.feeCollected + (deal.feeCollected || 0)
+    }), { syndicatedAmount: 0, syndicatedAmountOrigination: 0, originationFee: 0, totalPayback: 0, amountPaid: 0, remainingBalance: 0, interest: 0, totalTransactions: 0, remainingTransactions: 0, feeCollected: 0 })
     sums.avgFactorRate = sums.syndicatedAmount > 0 ? sums.totalPayback / sums.syndicatedAmount : DEFAULT_FACTOR_RATE
     return sums
   }, [sortedDeals])
@@ -152,6 +154,12 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
               )}
               {visibleColumns.payoffDate && (
                 <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('projectedPayoffDate')}>Est. Payoff</th>
+              )}
+              {visibleColumns.feeCollected && (
+                <th className="px-3 py-2.5 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('feeCollected')}>Fee</th>
+              )}
+              {visibleColumns.verification && (
+                <th className="px-3 py-2.5 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Verified</th>
               )}
             </tr>
           </thead>
@@ -247,6 +255,28 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
                     )}
                   </td>
                 )}
+                {visibleColumns.feeCollected && (
+                  <td className="px-3 py-2.5 whitespace-nowrap text-sm text-right text-gray-600">{formatCurrency(deal.feeCollected)}</td>
+                )}
+                {visibleColumns.verification && (
+                  <td className="px-3 py-2.5 whitespace-nowrap text-center">
+                    {deal._verified ? (
+                      deal._verification?.sheetMatch ? (
+                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-200" title={`${deal._verification.totalDebits} debits verified`}>
+                          <ShieldCheck className="h-3 w-3" />
+                          <span>{deal._verification.totalDebits}</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200" title={`Sheet: $${deal._sheet_principal_collected} → App: $${deal.principal_collected} (${deal._verification.totalDebits} debits)`}>
+                          <AlertTriangle className="h-3 w-3" />
+                          <span>Fixed</span>
+                        </span>
+                      )
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
+                  </td>
+                )}
               </tr>
             ))}
 
@@ -287,6 +317,16 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
               )}
               {visibleColumns.dateFunded && <td className="px-3 py-3"></td>}
               {visibleColumns.payoffDate && <td className="px-3 py-3"></td>}
+              {visibleColumns.feeCollected && (
+                <td className="px-3 py-3 text-sm text-right text-gray-600 font-bold">{formatCurrency(totals.feeCollected)}</td>
+              )}
+              {visibleColumns.verification && (
+                <td className="px-3 py-3 text-center">
+                  <span className="inline-flex items-center space-x-1 text-xs font-semibold text-green-700">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                  </span>
+                </td>
+              )}
             </tr>
           </tbody>
         </table>

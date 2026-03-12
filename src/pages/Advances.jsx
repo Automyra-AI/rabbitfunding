@@ -4,7 +4,7 @@ import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
 import AdvancesTable from '../components/advances/AdvancesTable'
 import AdvancesFilters from '../components/advances/AdvancesFilters'
-import { Briefcase, TrendingUp } from 'lucide-react'
+import { Briefcase, TrendingUp, ShieldCheck } from 'lucide-react'
 import { formatCurrency } from '../utils/calculations'
 
 const Advances = () => {
@@ -27,7 +27,9 @@ const Advances = () => {
     remainingTransactions: true,
     outstanding: true,
     dateFunded: true,
-    payoffDate: true
+    payoffDate: true,
+    feeCollected: true,
+    verification: true
   })
 
   const filteredDeals = useMemo(() => {
@@ -130,6 +132,21 @@ const Advances = () => {
           </div>
         </div>
       </div>
+
+      {/* Verification Banner */}
+      {filteredDeals.some(d => d._verified) && (
+        <div className="flex items-center space-x-2 px-4 py-2 bg-green-50 rounded-lg border border-green-200">
+          <ShieldCheck className="h-4 w-4 text-green-600" />
+          <span className="text-xs font-medium text-gray-700">
+            Principal & fee values calculated from {filteredDeals.reduce((s, d) => s + (d._verification?.totalDebits || 0), 0)} verified Check Debit transactions (waterfall applied)
+          </span>
+          {filteredDeals.some(d => d._verified && !d._verification?.sheetMatch) && (
+            <span className="text-xs font-semibold text-amber-700 bg-amber-100 px-2 py-0.5 rounded-full">
+              Sheet mismatches auto-corrected
+            </span>
+          )}
+        </div>
+      )}
 
       <AdvancesFilters
         statusFilter={statusFilter}

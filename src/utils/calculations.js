@@ -218,6 +218,129 @@ export const getProgressBarClass = (percentage) => {
   return percentage >= 100 ? 'progress-bar-fill-complete' : 'progress-bar-fill-partial'
 }
 
+/**
+ * Apply MCA waterfall logic to payout events and independently calculate
+ * principal_collected, fee_collected, and status per deal.
+ *
+ * Waterfall rule (same as N8N):
+ *   principal_applied = min(payment_amount, principal_remaining)
+ *   fee_applied       = payment_amount - principal_applied
+ *
+ * Only counts Check Debit transactions. Processes in chronological order per client.
+ * Returns { verifiedDeals, verifiedEvents }
+ */
+export const applyWaterfallVerification = (deals, payoutEvents) => {
+  // Group events by client key (lowercase trimmed)
+  const eventsByClient = {}
+  payoutEvents.forEach(event => {
+    const key = (event.client_name || event.client || '').toLowerCase().trim()
+    if (!key) return
+    if (!eventsByClient[key]) eventsByClient[key] = []
+    eventsByClient[key].push(event)
+  })
+
+  // Build deal lookup by client name
+  const dealByClient = {}
+  deals.forEach(deal => {
+    const key = (deal.client_name || '').toLowerCase().trim()
+    if (key) dealByClient[key] = deal
+  })
+
+  // Store calculated values per event id
+  const verifiedEventMap = new Map()
+  // Store calculated totals per client
+  const verifiedDealStats = {}
+
+  for (const [clientKey, events] of Object.entries(eventsByClient)) {
+    const deal = dealByClient[clientKey]
+    if (!deal) continue
+
+    const principalAdvanced = deal.purchase_price || deal.principal_advanced || 0
+
+    // Sort oldest first for correct waterfall accumulation
+    const sorted = [...events].sort((a, b) => {
+      const dateA = parseDate(a.transaction_date || a.date).getTime()
+      const dateB = parseDate(b.transaction_date || b.date).getTime()
+      if (dateA !== dateB) return dateA - dateB
+      // Tie-break by history_keyid (lower = older)
+      return (a.history_keyid || '').localeCompare(b.history_keyid || '')
+    })
+
+    let cumulativePrincipal = 0
+    let cumulativeFee = 0
+
+    sorted.forEach(event => {
+      const amount = event.amount || 0
+      const principalRemaining = Math.max(0, principalAdvanced - cumulativePrincipal)
+      const principalApplied = Math.min(amount, principalRemaining)
+      const feeApplied = Math.round((amount - principalApplied) * 100) / 100
+
+      cumulativePrincipal += principalApplied
+      cumulativeFee += feeApplied
+
+      verifiedEventMap.set(event.id, {
+        principalApplied,
+        feeApplied,
+        cumulativePrincipal,
+        cumulativeFee
+      })
+    })
+
+    const isPaidOff = cumulativePrincipal >= principalAdvanced
+
+    verifiedDealStats[clientKey] = {
+      principal_collected: Math.round(cumulativePrincipal * 100) / 100,
+      fee_collected: Math.round(cumulativeFee * 100) / 100,
+      status: isPaidOff ? 'PaidOff' : (deal.status || 'Active'),
+      totalDebits: events.length,
+      totalAmount: events.reduce((s, e) => s + (e.amount || 0), 0)
+    }
+  }
+
+  // Apply verified values to payout events
+  const verifiedEvents = payoutEvents.map(event => {
+    const verified = verifiedEventMap.get(event.id)
+    if (verified) {
+      return {
+        ...event,
+        principal_applied: verified.principalApplied,
+        fee_applied: verified.feeApplied,
+        principalApplied: verified.principalApplied,
+        feeApplied: verified.feeApplied
+      }
+    }
+    return event
+  })
+
+  // Apply verified values to deals, keep sheet originals for reference
+  const verifiedDeals = deals.map(deal => {
+    const key = (deal.client_name || '').toLowerCase().trim()
+    const verified = verifiedDealStats[key]
+    if (verified) {
+      return {
+        ...deal,
+        // Override with app-calculated values
+        principal_collected: verified.principal_collected,
+        fee_collected: verified.fee_collected,
+        status: verified.status,
+        // Store sheet originals so UI can compare
+        _sheet_principal_collected: deal.principal_collected,
+        _sheet_fee_collected: deal.fee_collected,
+        _sheet_status: deal.status,
+        _verified: true,
+        _verification: {
+          totalDebits: verified.totalDebits,
+          totalAmount: verified.totalAmount,
+          sheetMatch: Math.abs(deal.principal_collected - verified.principal_collected) < 1
+        }
+      }
+    }
+    return { ...deal, _verified: false }
+  })
+
+  return { verifiedDeals, verifiedEvents }
+}
+
 // Add N business days (Mon-Fri) to a date, skipping weekends
 export const addBusinessDays = (startDate, businessDays) => {
   const result = new Date(startDate)
@@ -243,10 +366,10 @@ export const getProjectedCompletionDate = (deal, avgPaymentOverride = null) => {
   if (remaining <= 0) return null // Already fully paid off
 
   // Use best available daily payment amount:
-  // 1. expected_amount from deal  2. last_payment_amount  3. avg from actual transactions
+  // 1. last_payment_amount (actual daily payment)  2. avg from actual transactions
+  // Note: expected_amount can be a weekly/monthly total, not daily — so use last_payment_amount first
   const dailyPayment =
-    (deal.expected_amount > 0 ? deal.expected_amount :
-     deal.last_payment_amount > 0 ? deal.last_payment_amount :
+    (deal.last_payment_amount > 0 ? deal.last_payment_amount :
      avgPaymentOverride) || 0
 
   if (dailyPayment <= 0) return null
