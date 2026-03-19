@@ -22,8 +22,8 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
       const factorRate = deal.factor_rate || (syndicatedAmount > 0 ? totalPayback / syndicatedAmount : DEFAULT_FACTOR_RATE)
       const interest = totalPayback - syndicatedAmount
       const remainingBalance = Math.max(0, totalPayback - amountPaid)
-      const totalTransactions = paymentPerTransaction > 0 ? Math.floor(totalPayback / paymentPerTransaction) : 0
-      const remainingTransactions = (paymentPerTransaction > 0 && remainingBalance > 0) ? Math.floor(remainingBalance / paymentPerTransaction) : 0
+      const totalTransactions = paymentPerTransaction > 0 ? Math.round(totalPayback / paymentPerTransaction) : 0
+      const remainingTransactions = (paymentPerTransaction > 0 && remainingBalance > 0) ? Math.round(remainingBalance / paymentPerTransaction) : 0
       const paidBackPercent = totalPayback > 0 ? (amountPaid / totalPayback) * 100 : 0
 
       const dealPayments = payoutEvents.filter(
