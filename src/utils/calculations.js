@@ -314,7 +314,7 @@ export const applyWaterfallVerification = (deals, payoutEvents) => {
     verifiedDealStats[clientKey] = {
       principal_collected: Math.round(cumulativePrincipal * 100) / 100,
       fee_collected: Math.round(cumulativeFee * 100) / 100,
-      status: isPaidOff ? 'PaidOff' : (deal.status || 'Active'),
+      status: isPaidOff ? 'PaidOff' : 'Active',
       totalDebits: events.length,
       settledDebits: settledEvents.length,
       pendingDebits: pendingEvents.length,
