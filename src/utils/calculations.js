@@ -243,11 +243,13 @@ export const applyWaterfallVerification = (deals, payoutEvents) => {
     eventsByClient[key].push(event)
   })
 
-  // Build deal lookup by client name
+  // Build deal lookup by client name AND qbo_customer_name
   const dealByClient = {}
   deals.forEach(deal => {
-    const key = (deal.client_name || '').toLowerCase().trim()
-    if (key) dealByClient[key] = deal
+    const key1 = (deal.client_name || '').toLowerCase().trim()
+    const key2 = (deal.qbo_customer_name || '').toLowerCase().trim()
+    if (key1) dealByClient[key1] = deal
+    if (key2 && key2 !== key1) dealByClient[key2] = deal
   })
 
   // Store calculated values per event id
@@ -335,8 +337,9 @@ export const applyWaterfallVerification = (deals, payoutEvents) => {
 
   // Apply verified values to deals, keep sheet originals for reference
   const verifiedDeals = deals.map(deal => {
-    const key = (deal.client_name || '').toLowerCase().trim()
-    const verified = verifiedDealStats[key]
+    const key1 = (deal.client_name || '').toLowerCase().trim()
+    const key2 = (deal.qbo_customer_name || '').toLowerCase().trim()
+    const verified = verifiedDealStats[key1] || verifiedDealStats[key2]
     if (verified) {
       return {
         ...deal,
@@ -389,15 +392,20 @@ export const getProjectedCompletionDate = (deal, avgPaymentOverride = null) => {
   )
   if (remaining <= 0) return null // Already fully paid off
 
-  // Use best available daily payment amount:
-  // 1. last_payment_amount (actual daily payment)  2. avg from actual transactions
-  // Note: expected_amount can be a weekly/monthly total, not daily — so use last_payment_amount first
-  const dailyPayment =
+  const paymentAmount =
     (deal.last_payment_amount > 0 ? deal.last_payment_amount :
      avgPaymentOverride) || 0
 
-  if (dailyPayment <= 0) return null
+  if (paymentAmount <= 0) return null
 
-  const businessDaysLeft = Math.ceil(remaining / dailyPayment)
-  return addBusinessDays(new Date(), businessDaysLeft)
+  const frequency = (deal.payment_frequency || 'Business Day').toLowerCase()
+  const remainingPayments = Math.ceil(remaining / paymentAmount)
+
+  if (frequency === 'weekly') {
+    return addBusinessDays(new Date(), remainingPayments * 5)
+  } else if (frequency === 'monthly') {
+    return addBusinessDays(new Date(), remainingPayments * 21)
+  } else {
+    return addBusinessDays(new Date(), remainingPayments)
+  }
 }

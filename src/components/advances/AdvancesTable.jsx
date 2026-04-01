@@ -32,10 +32,19 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
       )
       const paymentCount = dealPayments.length
 
-      // Projected payoff = today + remaining business days (Mon-Fri only)
-      const projectedPayoffDate = remainingBalance > 0 && paymentPerTransaction > 0 && remainingTransactions > 0
-        ? addBusinessDays(new Date(), remainingTransactions)
-        : null
+      // Projected payoff based on payment frequency
+      const frequency = (deal.payment_frequency || 'Business Day').toLowerCase()
+      let projectedPayoffDate = null
+      if (remainingBalance > 0 && paymentPerTransaction > 0 && remainingTransactions > 0) {
+        if (frequency === 'weekly') {
+          projectedPayoffDate = addBusinessDays(new Date(), remainingTransactions * 5)
+        } else if (frequency === 'monthly') {
+          projectedPayoffDate = addBusinessDays(new Date(), remainingTransactions * 21)
+        } else {
+          // Business Day: each transaction = 1 business day
+          projectedPayoffDate = addBusinessDays(new Date(), remainingTransactions)
+        }
+      }
 
       return {
         ...deal,

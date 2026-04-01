@@ -58,7 +58,8 @@ export const fetchDealsData = async () => {
     // 7: Deal ID, 8: Client Name, 9: Principal Collected, 10: Status, 11: Funded Date (duplicate),
     // 12: Expected Amount, 13: Expected Amount Low, 14: Expected Amount High, 15: Updated Date,
     // 16: Last QBO JE, 17: Last Payment Date, 18: Last Payment Amount, 19: Last HistoryKey ID,
-    // 20: Fee Collected, 21: Customer Email, 22: Syndicated Amount - Origination
+    // 20: Fee Collected, 21: Customer Email, 22: Syndicated Amount - Origination,
+    // 23: Payment Frequency (Daily / Weekly / Monthly)
 
     const deals = rows.slice(1).map((row, index) => {
       // Parse key values for factor rate calculation
@@ -97,6 +98,7 @@ export const fetchDealsData = async () => {
         fee_collected: parseNumber(row[20]),
         customer_email: row[21] || '',
         syndicated_amount_origination: syndicatedAmountOrigination,
+        payment_frequency: (row[23] || 'Business Day').trim(),  // Business Day / Weekly / Monthly
 
         // Calculated Factor Rate per deal
         factor_rate: factorRate,
