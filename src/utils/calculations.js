@@ -306,7 +306,10 @@ export const applyWaterfallVerification = (deals, payoutEvents) => {
       })
     })
 
-    const isPaidOff = cumulativePrincipal >= principalAdvanced
+    // PaidOff = total paid (principal + fees) >= total payback amount
+    const totalPayback = deal.receivables_purchased_amount || 0
+    const totalPaid = cumulativePrincipal + cumulativeFee
+    const isPaidOff = totalPayback > 0 && totalPaid >= totalPayback
 
     verifiedDealStats[clientKey] = {
       principal_collected: Math.round(cumulativePrincipal * 100) / 100,
