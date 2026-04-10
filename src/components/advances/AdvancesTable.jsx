@@ -14,7 +14,8 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
     return deals.map(deal => {
       const syndicatedAmount = deal.purchase_price || deal.principal_advanced || 0
       const totalPayback = deal.receivables_purchased_amount || (syndicatedAmount * DEFAULT_FACTOR_RATE)
-      const amountPaid = deal.principal_collected || 0
+      // Total paid = principal collected + fees collected (once principal is full, new payments count as fees)
+      const amountPaid = (deal.principal_collected || 0) + (deal.fee_collected || 0)
       const paymentPerTransaction = deal.last_payment_amount || 300
       const syndicatedAmountOrigination = deal.syndicated_amount_origination || 0
       // Origination Fee = Purchase Price - Syndicated Amount Origination
