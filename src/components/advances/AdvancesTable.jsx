@@ -1,12 +1,19 @@
 import { useState, useMemo } from 'react'
 import { CalendarCheck, ShieldCheck, AlertTriangle } from 'lucide-react'
 import { formatCurrency, formatDate, addBusinessDays } from '../../utils/calculations'
+import { useAuth } from '../../context/AuthContext'
+import { useData } from '../../context/DataContext'
+import DealActionsMenu from './DealActionsMenu'
+import MarkAsPaidModal from './MarkAsPaidModal'
 
 const ITEMS_PER_PAGE = 25
 
 const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
   const [sortConfig, setSortConfig] = useState({ key: 'date_funded', direction: 'desc' })
   const [currentPage, setCurrentPage] = useState(1)
+  const [payingDeal, setPayingDeal] = useState(null)
+  const { isAdmin } = useAuth()
+  const { refetch } = useData()
 
   const DEFAULT_FACTOR_RATE = 1.536
 
@@ -171,6 +178,9 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
               {visibleColumns.verification && (
                 <th className="px-3 py-2.5 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Verified</th>
               )}
+              {isAdmin && (
+                <th className="px-3 py-2.5 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Actions</th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -287,6 +297,11 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
                     )}
                   </td>
                 )}
+                {isAdmin && (
+                  <td className="px-3 py-2.5 whitespace-nowrap text-center">
+                    <DealActionsMenu deal={deal} onMarkAsPaid={setPayingDeal} />
+                  </td>
+                )}
               </tr>
             ))}
 
@@ -337,6 +352,7 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
                   </span>
                 </td>
               )}
+              {isAdmin && <td className="px-3 py-3"></td>}
             </tr>
           </tbody>
         </table>
@@ -367,6 +383,14 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
           </button>
         </div>
       </div>
+
+      {payingDeal && (
+        <MarkAsPaidModal
+          deal={payingDeal}
+          onClose={() => setPayingDeal(null)}
+          onSuccess={() => { refetch?.() }}
+        />
+      )}
     </div>
   )
 }
