@@ -127,6 +127,9 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
         <table className="w-full border-collapse">
           <thead className="bg-gray-50 sticky top-0">
             <tr>
+              {isAdmin && (
+                <th className="w-10 px-2 py-2.5 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200"></th>
+              )}
               {visibleColumns.state && (
                 <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100" onClick={() => handleSort('status')}>Status</th>
               )}
@@ -178,14 +181,16 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
               {visibleColumns.verification && (
                 <th className="px-3 py-2.5 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Verified</th>
               )}
-              {isAdmin && (
-                <th className="px-3 py-2.5 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Actions</th>
-              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
             {paginatedDeals.map((deal, index) => (
-              <tr key={index} className="hover:bg-gray-50 transition-colors">
+              <tr key={index} className="hover:bg-gray-50 transition-colors group">
+                {isAdmin && (
+                  <td className="w-10 px-2 py-2.5 text-center">
+                    <DealActionsMenu deal={deal} onMarkAsPaid={setPayingDeal} />
+                  </td>
+                )}
                 {visibleColumns.state && (
                   <td className="px-3 py-2.5 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${
@@ -297,16 +302,12 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
                     )}
                   </td>
                 )}
-                {isAdmin && (
-                  <td className="px-3 py-2.5 whitespace-nowrap text-center">
-                    <DealActionsMenu deal={deal} onMarkAsPaid={setPayingDeal} />
-                  </td>
-                )}
               </tr>
             ))}
 
             {/* Totals Row */}
             <tr className="bg-orange-50 font-semibold border-t-2 border-orange-300">
+              {isAdmin && <td className="w-10 px-2 py-3"></td>}
               {visibleColumns.state && <td className="px-3 py-3 text-sm text-gray-900 font-bold">TOTAL</td>}
               {visibleColumns.advanceId && <td className="px-3 py-3 text-sm text-gray-500">{sortedDeals.length} deals</td>}
               {visibleColumns.type && <td className="px-3 py-3"></td>}
@@ -352,7 +353,6 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
                   </span>
                 </td>
               )}
-              {isAdmin && <td className="px-3 py-3"></td>}
             </tr>
           </tbody>
         </table>
