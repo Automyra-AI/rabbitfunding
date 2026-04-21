@@ -269,3 +269,42 @@ export const updatePayoutEvent = async (historyKeyId, updates) => {
     throw error
   }
 }
+
+// Mark a deal as Paid in Full via off-platform payment (Zelle / Wire / Check / Cash).
+// Appends a manual settled row to Payout Events so the waterfall math includes the payoff,
+// AND updates the deal's Status cell to "PaidOff" in the Deals sheet.
+export const markDealAsPaid = async (deal, payment) => {
+  try {
+    const historyKeyId = `MANUAL-${Date.now()}`
+    const payload = {
+      action: 'markDealPaidInFull',
+      historyKeyId,
+      deal: {
+        qbo_customer_id: deal.qbo_customer_id || '',
+        qbo_customer_name: deal.qbo_customer_name || '',
+        client_name: deal.client_name || '',
+        contract_id: deal.contract_id || '',
+        deal_id: deal.deal_id || '',
+        actum_merchant_id: deal.actum_merchant_id || ''
+      },
+      payment: {
+        amount: Number(payment.amount) || 0,
+        method: payment.method || 'Zelle',
+        note: payment.note || '',
+        date: payment.date || new Date().toISOString().slice(0, 10)
+      }
+    }
+
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    })
+
+    return { success: true, historyKeyId }
+  } catch (error) {
+    console.error('Error marking deal as paid:', error)
+    throw error
+  }
+}
