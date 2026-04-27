@@ -309,11 +309,25 @@ export const applyWaterfallVerification = (deals, payoutEvents) => {
     // PaidOff = total paid (principal + fees) >= total payback amount
     const totalPayback = deal.receivables_purchased_amount || 0
     const totalPaid = cumulativePrincipal + cumulativeFee
-    const isPaidOff = totalPayback > 0 && totalPaid >= totalPayback
+    const calcSaysPaidOff = totalPayback > 0 && totalPaid >= totalPayback
+
+    // Respect explicit "PaidOff" set on the Deals sheet (e.g. via Mark as Paid in Full
+    // for an early payoff with discount). When the sheet says paid, force the deal
+    // to look fully paid so the UI is consistent everywhere.
+    const sheetSaysPaidOff = String(deal.status || '').toLowerCase().replace(/\s+/g, '') === 'paidoff'
+    const isPaidOff = calcSaysPaidOff || sheetSaysPaidOff
+
+    let finalPrincipal = cumulativePrincipal
+    let finalFee = cumulativeFee
+    if (sheetSaysPaidOff && !calcSaysPaidOff && totalPayback > 0) {
+      // Manual payoff (likely with discount) — force totals to fully cover payback
+      finalPrincipal = principalAdvanced
+      finalFee = Math.max(0, totalPayback - principalAdvanced)
+    }
 
     verifiedDealStats[clientKey] = {
-      principal_collected: Math.round(cumulativePrincipal * 100) / 100,
-      fee_collected: Math.round(cumulativeFee * 100) / 100,
+      principal_collected: Math.round(finalPrincipal * 100) / 100,
+      fee_collected: Math.round(finalFee * 100) / 100,
       status: isPaidOff ? 'PaidOff' : 'Active',
       totalDebits: events.length,
       settledDebits: settledEvents.length,
