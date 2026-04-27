@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { X, CheckCircle2, DollarSign, Calendar, FileText, Wallet, CreditCard, Banknote, CheckCircle, XCircle, Save, Briefcase } from 'lucide-react'
+import { X, CheckCircle2, DollarSign, Calendar, FileText, Wallet, CreditCard, Banknote, CheckCircle, XCircle, Save, Briefcase, Percent } from 'lucide-react'
 import { formatCurrency } from '../../utils/calculations'
 import { markDealAsPaid } from '../../services/googleSheets'
 
@@ -22,11 +22,15 @@ const MarkAsPaidModal = ({ deal, onClose, onSuccess }) => {
   const [method, setMethod] = useState('Zelle')
   const [note, setNote] = useState('')
   const [date, setDate] = useState(today)
+  const [applyDiscount, setApplyDiscount] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [status, setStatus] = useState(null) // 'success' | 'error'
+  const [status, setStatus] = useState(null)
   const [errorMsg, setErrorMsg] = useState('')
 
   const parsedAmount = useMemo(() => parseFloat(amount) || 0, [amount])
+  const shortfall = Math.max(0, remainingBalance - parsedAmount)
+  const hasShortfall = shortfall > 0.005 // float tolerance
+  const willMarkPaidOff = !hasShortfall || applyDiscount
   const isValid = parsedAmount > 0 && method && date
 
   if (!deal) return null
@@ -41,7 +45,8 @@ const MarkAsPaidModal = ({ deal, onClose, onSuccess }) => {
         amount: parsedAmount,
         method,
         note,
-        date
+        date,
+        discount: hasShortfall && applyDiscount ? Number(shortfall.toFixed(2)) : 0
       })
       setStatus('success')
       setTimeout(() => {
@@ -113,11 +118,11 @@ const MarkAsPaidModal = ({ deal, onClose, onSuccess }) => {
               </div>
             </div>
 
-            {/* Amount */}
+            {/* Amount paid */}
             <div>
               <label className="flex items-center space-x-1.5 mb-1.5">
                 <DollarSign className="h-3.5 w-3.5 text-gray-400" />
-                <span className="text-xs font-medium text-gray-500 uppercase">Payoff Amount</span>
+                <span className="text-xs font-medium text-gray-500 uppercase">Amount Merchant Pays</span>
               </label>
               <input
                 type="number"
@@ -127,16 +132,64 @@ const MarkAsPaidModal = ({ deal, onClose, onSuccess }) => {
                 onChange={e => setAmount(e.target.value)}
                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 outline-none transition-all"
               />
-              {parsedAmount > 0 && parsedAmount < remainingBalance && (
-                <p className="text-xs text-amber-600 mt-1 font-medium">
-                  Partial payment — deal will remain Active with {formatCurrency(remainingBalance - parsedAmount)} still owed.
-                </p>
-              )}
-              {parsedAmount >= remainingBalance && remainingBalance > 0 && (
-                <p className="text-xs text-green-600 mt-1 font-medium">
-                  Covers the full remaining balance — deal will be marked Paid in Full.
-                </p>
-              )}
+            </div>
+
+            {/* Discount toggle — only when payment < remaining */}
+            {hasShortfall && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start space-x-2">
+                    <Percent className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-semibold text-amber-900">Early Payoff Discount</p>
+                      <p className="text-xs text-amber-800 mt-0.5">
+                        Forgive the {formatCurrency(shortfall)} shortfall and close out the deal.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setApplyDiscount(prev => !prev)}
+                    className={`relative inline-flex flex-shrink-0 h-6 w-11 items-center rounded-full transition-colors ${
+                      applyDiscount ? 'bg-amber-500' : 'bg-gray-300'
+                    }`}
+                    aria-pressed={applyDiscount}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                        applyDiscount ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* Breakdown */}
+                <div className="rounded-md bg-white border border-amber-200 px-3 py-2 text-xs space-y-1">
+                  <div className="flex justify-between text-gray-700">
+                    <span>Merchant payment</span>
+                    <span className="font-mono font-semibold">{formatCurrency(parsedAmount)}</span>
+                  </div>
+                  <div className="flex justify-between text-amber-700">
+                    <span>{applyDiscount ? 'Discount (forgiven)' : 'Still owed'}</span>
+                    <span className="font-mono font-semibold">{formatCurrency(shortfall)}</span>
+                  </div>
+                  <div className="border-t border-gray-200 pt-1 flex justify-between text-gray-900 font-bold">
+                    <span>{applyDiscount ? 'Total settled' : 'Total covered'}</span>
+                    <span className="font-mono">{formatCurrency(applyDiscount ? remainingBalance : parsedAmount)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Resulting status preview */}
+            <div className={`rounded-lg px-3 py-2 text-xs font-medium ${
+              willMarkPaidOff
+                ? 'bg-green-50 text-green-700 border border-green-200'
+                : 'bg-amber-50 text-amber-700 border border-amber-200'
+            }`}>
+              {willMarkPaidOff
+                ? `✅ Deal will be marked Paid in Full${hasShortfall && applyDiscount ? ` (with ${formatCurrency(shortfall)} discount)` : ''}.`
+                : `⚠️ Partial payment — deal stays Active with ${formatCurrency(shortfall)} still owed.`}
             </div>
 
             {/* Method */}

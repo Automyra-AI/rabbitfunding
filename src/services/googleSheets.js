@@ -237,7 +237,7 @@ export const fetchPayoutEvents = async () => {
 }
 
 // Update a transaction in the Payout Events sheet via Google Apps Script Web App
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx86F8mK-6kUkRYKIJD3kQbUuFK02_wj0sPs0iyE86hNomaP2PCiC7iI4ZTyHf6aSw/exec'
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyEa_J_8Jik5Ej0yyehkJoFXs1Ad4gTFSEw0QkyyXlNijh3zP1zFaJJ-BvFEQaoH2Q/exec'
 
 export const updatePayoutEvent = async (historyKeyId, updates) => {
   try {
@@ -291,7 +291,8 @@ export const markDealAsPaid = async (deal, payment) => {
         amount: Number(payment.amount) || 0,
         method: payment.method || 'Zelle',
         note: payment.note || '',
-        date: payment.date || new Date().toISOString().slice(0, 10)
+        date: payment.date || new Date().toISOString().slice(0, 10),
+        discount: Number(payment.discount) || 0
       }
     }
 
