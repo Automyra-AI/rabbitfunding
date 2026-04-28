@@ -142,21 +142,25 @@ const MarkAsPaidModal = ({ deal, onClose, onSuccess }) => {
                   </p>
                 </div>
                 <div className="rounded-md bg-white border border-amber-200 px-3 py-2 text-xs space-y-1">
-                  <div className="flex justify-between text-gray-700">
-                    <span>Merchant payment ({method})</span>
-                    <span className="font-mono font-semibold">{formatCurrency(parsedAmount)}</span>
+                  <div className="flex justify-between text-gray-500 line-through">
+                    <span>Original Payback</span>
+                    <span className="font-mono">{formatCurrency(totalPayback)}</span>
                   </div>
                   <div className="flex justify-between text-amber-700">
                     <span>Discount (forgiven)</span>
-                    <span className="font-mono font-semibold">{formatCurrency(discount)}</span>
+                    <span className="font-mono font-semibold">−{formatCurrency(discount)}</span>
                   </div>
                   <div className="border-t border-gray-200 pt-1 flex justify-between text-gray-900 font-bold">
-                    <span>Total settled</span>
-                    <span className="font-mono">{formatCurrency(remainingBalance)}</span>
+                    <span>New Payback</span>
+                    <span className="font-mono">{formatCurrency(totalPayback - discount)}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-700 pt-1">
+                    <span>Merchant pays today ({method})</span>
+                    <span className="font-mono font-semibold">{formatCurrency(parsedAmount)}</span>
                   </div>
                 </div>
                 <p className="text-[11px] text-amber-700">
-                  A separate <strong>Early Payoff Discount</strong> row will be added to Payout Events for the {formatCurrency(discount)} forgiven.
+                  The deal's <strong>Payback</strong> will be reduced by {formatCurrency(discount)} to reflect the discount, and the deal will be marked Paid in Full.
                 </p>
               </div>
             )}
