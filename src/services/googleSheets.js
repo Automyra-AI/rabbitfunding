@@ -237,7 +237,7 @@ export const fetchPayoutEvents = async () => {
 }
 
 // Update a transaction in the Payout Events sheet via Google Apps Script Web App
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzSC2UEaqHaKjhj8gD1x_D2kqd4vr-iEMZNIludGWsWK5YF-TbLMwcid0QKJlA6pGw/exec'
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzK1VXdm-p2x-K_0u5h7clKXjQwl1HTZ5hV3o6kFm3pxx8Hv31fglyaojrvmGMZoXY/exec'
 
 export const updatePayoutEvent = async (historyKeyId, updates) => {
   try {
