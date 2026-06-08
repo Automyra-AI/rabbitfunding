@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { MoreVertical, CheckCircle2 } from 'lucide-react'
+import { MoreVertical, CheckCircle2, Trash2 } from 'lucide-react'
 
 const MENU_WIDTH = 240
-const MENU_ESTIMATED_HEIGHT = 80
+const MENU_ESTIMATED_HEIGHT = 140
 
-const DealActionsMenu = ({ deal, onMarkAsPaid }) => {
+const DealActionsMenu = ({ deal, onMarkAsPaid, onDelete }) => {
   const [open, setOpen] = useState(false)
   const [coords, setCoords] = useState({ top: 0, left: 0 })
   const buttonRef = useRef(null)
@@ -101,6 +101,23 @@ const DealActionsMenu = ({ deal, onMarkAsPaid }) => {
               {!isAlreadyPaid && (
                 <span className="text-[11px] text-gray-400 whitespace-nowrap">Zelle / Wire / Check payment</span>
               )}
+            </div>
+          </button>
+
+          <div className="border-t border-gray-100" />
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setOpen(false)
+              onDelete?.(deal)
+            }}
+            className="w-full flex items-center space-x-2.5 px-3 py-2.5 text-sm text-left text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors"
+          >
+            <Trash2 className="h-4 w-4 text-red-600 flex-shrink-0" />
+            <div className="flex flex-col items-start leading-tight min-w-0">
+              <span className="font-medium whitespace-nowrap">Delete Deal</span>
+              <span className="text-[11px] text-gray-400 whitespace-nowrap">Hide customer &amp; transactions</span>
             </div>
           </button>
         </div>,

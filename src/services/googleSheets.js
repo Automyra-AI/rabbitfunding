@@ -11,6 +11,14 @@ const parseNumber = (value) => {
   return isNaN(parsed) ? 0 : parsed
 }
 
+// Helper to detect a truthy "Deleted" flag from a sheet cell
+// (accepts TRUE / true / "yes" / 1 — anything else is treated as not deleted)
+const isDeletedFlag = (value) => {
+  if (value === true) return true
+  const v = String(value ?? '').toLowerCase().trim()
+  return v === 'true' || v === 'yes' || v === '1' || v === 'deleted'
+}
+
 export const fetchDealsData = async () => {
   if (USE_MOCK_DATA) {
     // Simulate API delay
@@ -60,6 +68,7 @@ export const fetchDealsData = async () => {
     // 16: Last QBO JE, 17: Last Payment Date, 18: Last Payment Amount, 19: Last HistoryKey ID,
     // 20: Fee Collected, 21: Customer Email, 22: Syndicated Amount - Origination,
     // 23: Payment Frequency (Daily / Weekly / Monthly)
+    // 24: Deleted (col Y) — TRUE means soft-deleted; hidden from the app
 
     const deals = rows.slice(1).map((row, index) => {
       // Parse key values for factor rate calculation
@@ -100,6 +109,9 @@ export const fetchDealsData = async () => {
         syndicated_amount_origination: syndicatedAmountOrigination,
         payment_frequency: (row[23] || 'Business Day').trim(),  // Business Day / Weekly / Monthly
 
+        // Soft-delete flag (col Y / index 24)
+        _deleted: isDeletedFlag(row[24]),
+
         // Calculated Factor Rate per deal
         factor_rate: factorRate,
 
@@ -108,8 +120,15 @@ export const fetchDealsData = async () => {
       }
     })
 
-    console.log('Sample deal after mapping:', deals[0])
-    return deals
+    // Hide soft-deleted deals — only show rows where Deleted is FALSE/empty
+    const activeDeals = deals.filter(deal => !deal._deleted)
+    const hiddenCount = deals.length - activeDeals.length
+    if (hiddenCount > 0) {
+      console.log(`🗑️ Hiding ${hiddenCount} soft-deleted deal(s)`)
+    }
+
+    console.log('Sample deal after mapping:', activeDeals[0])
+    return activeDeals
   } catch (error) {
     console.error('Error fetching deals from Google Sheets:', error)
     throw error
@@ -163,6 +182,7 @@ export const fetchPayoutEvents = async () => {
     // 10: QBO Principal JE, 11: QBO Fee JE, 12: Match Method, 13: Auth Code, 14: Error,
     // 15: Transaction Type (Check Debit / Check Settlement)
     // 16: Reference Key ID (used by Check Settlement to match with Check Debit's History Key ID)
+    // 17: Manual Status Override, 18: Deleted (col S) — TRUE means soft-deleted; hidden from the app
 
     // STEP 1: Build set of all Reference Key IDs (these are settlement confirmations)
     // If a Debit's History Key ID is in this set → that Debit is Settled
@@ -179,6 +199,9 @@ export const fetchPayoutEvents = async () => {
     // Mark Debit as Settled if its History Key ID appears in settledDateMap
     const events = rows.slice(1)
       .map((row, index) => {
+        // Skip soft-deleted transactions (col S / index 18) — e.g. rows whose deal was deleted
+        if (isDeletedFlag(row[18])) return null
+
         const referenceKeyId = (row[16] || '').trim()
 
         // If this row has a Reference Key ID, it's a settlement confirmation → skip it
@@ -306,6 +329,38 @@ export const markDealAsPaid = async (deal, payment) => {
     return { success: true, historyKeyId }
   } catch (error) {
     console.error('Error marking deal as paid:', error)
+    throw error
+  }
+}
+
+// Soft-delete a deal (whole customer) AND all of its related transactions.
+// Does NOT remove rows from the sheet — the Apps Script sets a "Deleted" flag to TRUE
+// on the deal's row in the Deals sheet and on every matching Payout Events row.
+// fetchDealsData / fetchPayoutEvents then hide anything where Deleted is TRUE.
+export const deleteDeal = async (deal) => {
+  try {
+    const payload = {
+      action: 'deleteDeal',
+      deal: {
+        qbo_customer_id: deal.qbo_customer_id || '',
+        qbo_customer_name: deal.qbo_customer_name || '',
+        client_name: deal.client_name || '',
+        contract_id: deal.contract_id || '',
+        deal_id: deal.deal_id || '',
+        actum_merchant_id: deal.actum_merchant_id || ''
+      }
+    }
+
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    })
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error deleting deal:', error)
     throw error
   }
 }
