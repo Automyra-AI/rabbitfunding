@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { Rabbit, Download, RefreshCw, LogOut, User, ChevronDown } from 'lucide-react'
+import { Rabbit, Download, RefreshCw, LogOut, User, ChevronDown, Menu } from 'lucide-react'
 import { useData } from '../context/DataContext'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 
-const Navbar = () => {
+const Navbar = ({ onMenuClick }) => {
   const { lastUpdated, refetch, loading } = useData()
   const { user, logout } = useAuth()
   const navigate = useNavigate()
@@ -23,6 +23,14 @@ const Navbar = () => {
     <header className="bg-white border-b-2 border-gray-200 px-2 sm:px-4 py-2 flex items-center justify-between min-w-0 overflow-hidden">
       {/* Left side - Brand */}
       <div className="flex items-center space-x-2 flex-shrink-0">
+        {/* Hamburger - opens the navigation sidebar on mobile */}
+        <button
+          onClick={onMenuClick}
+          className="p-1.5 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all duration-200 lg:hidden"
+          aria-label="Open navigation menu"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
         <div className="p-1.5 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg shadow-md">
           <Rabbit className="h-5 w-5 text-white" />
         </div>
