@@ -45,7 +45,7 @@ const Sidebar = ({ open, onClose }) => {
       {/* Sidebar - Narrow width */}
       <aside
         className={`
-          fixed lg:relative lg:flex-shrink-0 top-0 left-0 z-40 h-full w-16 bg-white border-r border-gray-200
+          fixed lg:relative lg:flex-shrink-0 top-0 left-0 z-40 h-full w-16 bg-white border-r border-gray-200 overflow-hidden
           transform transition-all duration-300 ease-in-out
           ${open ? 'translate-x-0 w-56' : '-translate-x-full lg:translate-x-0'}
         `}

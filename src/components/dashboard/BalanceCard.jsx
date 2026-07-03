@@ -68,7 +68,7 @@ const BalanceCard = ({ stats }) => {
                   <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider truncate">
                     {item.label}
                   </p>
-                  <p className={`text-xl font-bold ${item.color} tracking-tight`}>
+                  <p className={`text-xl font-bold ${item.color} tracking-tight truncate`}>
                     {formatCurrency(item.value)}
                   </p>
                 </div>

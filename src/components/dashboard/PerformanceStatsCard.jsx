@@ -107,7 +107,7 @@ const PerformanceStatsCard = ({ stats }) => {
                     <p className={`text-xs font-semibold uppercase tracking-wider ${item.color} truncate`}>
                       {item.label}
                     </p>
-                    <p className={`text-base font-bold ${item.color} tracking-tight`}>
+                    <p className={`text-base font-bold ${item.color} tracking-tight truncate`}>
                       {item.value}
                     </p>
                   </div>
