@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { X, Clock, BadgeCheck, Hash, Calendar, User, DollarSign, FileText, AlertTriangle, Save, ArrowRightLeft, CheckCircle, XCircle } from 'lucide-react'
+import { X, Clock, BadgeCheck, Hash, Calendar, User, DollarSign, FileText, AlertTriangle, Save, ArrowRightLeft, CheckCircle, XCircle, Undo2 } from 'lucide-react'
 import { formatCurrency, formatDate } from '../../utils/calculations'
 
 const TransactionModal = ({ transaction, onClose, onSave }) => {
@@ -27,7 +27,7 @@ const TransactionModal = ({ transaction, onClose, onSave }) => {
         description: transaction.description || '',
         error: transaction.error || '',
         notes: transaction.notes || '',
-        status: transaction.isSettled ? 'Settled' : 'Pending'
+        status: transaction.isReturned ? 'Returned' : (transaction.isSettled ? 'Settled' : 'Pending')
       })
     }
   }, [transaction])
@@ -54,12 +54,15 @@ const TransactionModal = ({ transaction, onClose, onSave }) => {
     }
   }
 
-  const isCurrentlySettled = formData.status === 'Settled'
-  const statusConfig = isCurrentlySettled
-    ? { label: 'Settled', icon: BadgeCheck, bgClass: 'bg-green-50 border-green-200', textClass: 'text-green-700', badgeClass: 'bg-green-100 text-green-800', iconBg: 'bg-green-200' }
-    : { label: 'Pending', icon: Clock, bgClass: 'bg-amber-50 border-amber-200', textClass: 'text-amber-700', badgeClass: 'bg-amber-100 text-amber-800', iconBg: 'bg-amber-200' }
+  const STATUS_CONFIGS = {
+    Settled: { label: 'Settled', icon: BadgeCheck, bgClass: 'bg-green-50 border-green-200', textClass: 'text-green-700', badgeClass: 'bg-green-100 text-green-800', iconBg: 'bg-green-200' },
+    Returned: { label: 'Return', icon: Undo2, bgClass: 'bg-red-50 border-red-200', textClass: 'text-red-700', badgeClass: 'bg-red-100 text-red-800', iconBg: 'bg-red-200' },
+    Pending: { label: 'Pending', icon: Clock, bgClass: 'bg-amber-50 border-amber-200', textClass: 'text-amber-700', badgeClass: 'bg-amber-100 text-amber-800', iconBg: 'bg-amber-200' }
+  }
+  const statusConfig = STATUS_CONFIGS[formData.status] || STATUS_CONFIGS.Pending
 
   const StatusIcon = statusConfig.icon
+  const originalStatus = transaction.isReturned ? 'Returned' : (transaction.isSettled ? 'Settled' : 'Pending')
 
   return (
     <>
@@ -152,8 +155,20 @@ const TransactionModal = ({ transaction, onClose, onSave }) => {
                   <BadgeCheck className="h-4 w-4" />
                   <span>Settled</span>
                 </button>
+                <button
+                  type="button"
+                  onClick={() => handleChange('status', 'Returned')}
+                  className={`flex-1 flex items-center justify-center space-x-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
+                    formData.status === 'Returned'
+                      ? 'bg-red-500 text-white shadow-md'
+                      : 'bg-white text-gray-500 border border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300'
+                  }`}
+                >
+                  <Undo2 className="h-4 w-4" />
+                  <span>Return</span>
+                </button>
               </div>
-              {formData.status !== (transaction.isSettled ? 'Settled' : 'Pending') && (
+              {formData.status !== originalStatus && (
                 <p className="text-xs text-orange-600 mt-1 font-medium">
                   Status will be manually overridden in Google Sheet (column R)
                 </p>

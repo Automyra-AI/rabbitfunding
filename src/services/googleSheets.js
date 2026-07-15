@@ -180,16 +180,24 @@ export const fetchPayoutEvents = async () => {
     // 0: History KeyID, 1: Order ID, 2: SubID, 3: Consumer Unique ID, 4: Client Name,
     // 5: Amount, 6: Principal Applied, 7: Fee Applied, 8: Transaction Date, 9: Processed Date,
     // 10: QBO Principal JE, 11: QBO Fee JE, 12: Match Method, 13: Auth Code, 14: Error,
-    // 15: Transaction Type (Check Debit / Check Settlement)
-    // 16: Reference Key ID (used by Check Settlement to match with Check Debit's History Key ID)
+    // 15: Transaction Type (Debit / Settlement / Return)
+    // 16: Reference Key ID (used by Settlement & Return rows to match with the Debit's History Key ID)
     // 17: Manual Status Override, 18: Deleted (col S) — TRUE means soft-deleted; hidden from the app
 
-    // STEP 1: Build set of all Reference Key IDs (these are settlement confirmations)
-    // If a Debit's History Key ID is in this set → that Debit is Settled
+    // STEP 1: Build maps from all confirmation rows (rows WITH a Reference Key ID).
+    // A confirmation's Reference Key ID matches the original Debit's History Key ID.
+    // The confirmation row's Transaction Type (col 15) tells us the outcome:
+    //   - "Settlement" → the Debit cleared → that Debit is Settled
+    //   - "Return"     → the Debit bounced/was returned → that Debit is Returned
     const settledDateMap = new Map()
+    const returnedDateMap = new Map()
     rows.slice(1).forEach(row => {
       const referenceKeyId = (row[16] || '').trim()
-      if (referenceKeyId) {
+      if (!referenceKeyId) return
+      const confirmationType = (row[15] || '').toLowerCase()
+      if (confirmationType.includes('return')) {
+        returnedDateMap.set(referenceKeyId, row[8] || '')
+      } else {
         settledDateMap.set(referenceKeyId, row[8] || '')
       }
     })
@@ -204,17 +212,25 @@ export const fetchPayoutEvents = async () => {
 
         const referenceKeyId = (row[16] || '').trim()
 
-        // If this row has a Reference Key ID, it's a settlement confirmation → skip it
+        // If this row has a Reference Key ID, it's a settlement/return confirmation → skip it
         if (referenceKeyId) return null
 
         const historyKeyId = (row[0] || '').trim()
+
+        // A Return confirmation takes precedence over a Settlement one
+        const isReturnedByMatch = historyKeyId && returnedDateMap.has(historyKeyId)
+        const returnDate = isReturnedByMatch ? returnedDateMap.get(historyKeyId) : ''
+
         const isSettledByMatch = historyKeyId && settledDateMap.has(historyKeyId)
         const settlementDate = isSettledByMatch ? settledDateMap.get(historyKeyId) : ''
 
         // Column R (index 17) = Manual Status Override
         const manualStatusOverride = (row[17] || '').toLowerCase().trim()
+        const isReturnedByOverride = manualStatusOverride === 'returned' || manualStatusOverride === 'return'
         const isSettledByOverride = manualStatusOverride === 'settled'
-        const isSettledFinal = isSettledByMatch || isSettledByOverride
+
+        const isReturnedFinal = isReturnedByMatch || isReturnedByOverride
+        const isSettledFinal = (isSettledByMatch || isSettledByOverride) && !isReturnedFinal
 
         return {
           id: index + 1,
@@ -236,10 +252,12 @@ export const fetchPayoutEvents = async () => {
           transaction_type: row[15] || '',
           reference_key_id: '',
 
-          isPending: !isSettledFinal,
+          isPending: !isSettledFinal && !isReturnedFinal,
           isSettled: isSettledFinal,
-          paymentStatus: isSettledFinal ? 'settled' : 'pending',
+          isReturned: isReturnedFinal,
+          paymentStatus: isReturnedFinal ? 'returned' : (isSettledFinal ? 'settled' : 'pending'),
           settlementDate: settlementDate || '',
+          returnDate: returnDate || '',
 
           date: row[8] || '',
           type: 'Credit',
@@ -251,7 +269,7 @@ export const fetchPayoutEvents = async () => {
       })
       .filter(event => event !== null)
 
-    console.log(`✅ Payout events: ${events.length}, Settled: ${events.filter(e => e.isSettled).length}, Pending: ${events.filter(e => e.isPending).length}`)
+    console.log(`✅ Payout events: ${events.length}, Settled: ${events.filter(e => e.isSettled).length}, Pending: ${events.filter(e => e.isPending).length}, Returned: ${events.filter(e => e.isReturned).length}`)
     return events
   } catch (error) {
     console.error('Error fetching payout events from Google Sheets:', error)
@@ -280,7 +298,7 @@ export const updatePayoutEvent = async (historyKeyId, updates) => {
           feeApplied: updates.feeApplied,
           matchMethod: updates.description,
           error: updates.error,
-          status: updates.status   // 'Settled' or 'Pending' → written to column R
+          status: updates.status   // 'Settled', 'Pending' or 'Returned' → written to column R
         }
       })
     })

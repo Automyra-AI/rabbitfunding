@@ -38,6 +38,7 @@ const LedgerFilters = ({
             <option value="all">All Status</option>
             <option value="pending">Pending (Debit)</option>
             <option value="settled">Settled (Cleared)</option>
+            <option value="returned">Returned</option>
           </select>
         </div>
 

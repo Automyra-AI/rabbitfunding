@@ -64,8 +64,10 @@ const Ledger = () => {
         transaction_type: event.transaction_type || '',
         isPending: event.isPending || false,
         isSettled: event.isSettled || false,
+        isReturned: event.isReturned || false,
         paymentStatus: event.paymentStatus || 'unknown',
         settlementDate: event.settlementDate || '',
+        returnDate: event.returnDate || '',
         projectedCompletion: dealCompletionMap[clientKey] || null
       }
     })
@@ -110,6 +112,8 @@ const Ledger = () => {
         filtered = filtered.filter(t => t.isPending)
       } else if (statusFilter === 'settled') {
         filtered = filtered.filter(t => t.isSettled)
+      } else if (statusFilter === 'returned') {
+        filtered = filtered.filter(t => t.isReturned)
       }
     }
 
@@ -144,11 +148,14 @@ const Ledger = () => {
   const statusSummary = useMemo(() => {
     const pending = filteredTransactions.filter(t => t.isPending)
     const settled = filteredTransactions.filter(t => t.isSettled)
+    const returned = filteredTransactions.filter(t => t.isReturned)
     return {
       pendingCount: pending.length,
       pendingAmount: pending.reduce((sum, t) => sum + t.amount, 0),
       settledCount: settled.length,
-      settledAmount: settled.reduce((sum, t) => sum + t.amount, 0)
+      settledAmount: settled.reduce((sum, t) => sum + t.amount, 0),
+      returnedCount: returned.length,
+      returnedAmount: returned.reduce((sum, t) => sum + t.amount, 0)
     }
   }, [filteredTransactions])
 
@@ -159,7 +166,7 @@ const Ledger = () => {
       ...filteredTransactions.map(t => [
         formatDateForCSV(t.date),
         `"${t.client}"`,
-        t.isPending ? 'Pending' : (t.isSettled ? 'Settled' : '-'),
+        t.isReturned ? 'Return' : (t.isPending ? 'Pending' : (t.isSettled ? 'Settled' : '-')),
         t.principalApplied,
         t.feeApplied,
         t.amount,
@@ -242,6 +249,10 @@ const Ledger = () => {
             <div className="px-2 sm:px-3 py-1.5 sm:py-2 bg-green-50 rounded-lg border border-green-200 min-w-0">
               <p className="text-xs text-green-600 font-medium">Settled</p>
               <p className="text-xs sm:text-sm font-bold text-green-700 truncate">{statusSummary.settledCount} ({formatCurrency(statusSummary.settledAmount)})</p>
+            </div>
+            <div className="px-2 sm:px-3 py-1.5 sm:py-2 bg-red-50 rounded-lg border border-red-200 min-w-0">
+              <p className="text-xs text-red-600 font-medium">Returned</p>
+              <p className="text-xs sm:text-sm font-bold text-red-700 truncate">{statusSummary.returnedCount} ({formatCurrency(statusSummary.returnedAmount)})</p>
             </div>
           </div>
         </div>
