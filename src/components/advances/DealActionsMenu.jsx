@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { MoreVertical, CheckCircle2, Trash2 } from 'lucide-react'
+import { MoreVertical, CheckCircle2, Trash2, Pencil } from 'lucide-react'
 
 const MENU_WIDTH = 240
-const MENU_ESTIMATED_HEIGHT = 140
+const MENU_ESTIMATED_HEIGHT = 190
 
-const DealActionsMenu = ({ deal, onMarkAsPaid, onDelete }) => {
+const DealActionsMenu = ({ deal, onEdit, onMarkAsPaid, onDelete }) => {
   const [open, setOpen] = useState(false)
   const [coords, setCoords] = useState({ top: 0, left: 0 })
   const buttonRef = useRef(null)
@@ -86,6 +86,23 @@ const DealActionsMenu = ({ deal, onMarkAsPaid, onDelete }) => {
           <div className="px-3 py-2 bg-gray-50 border-b border-gray-100">
             <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap">Admin Actions</p>
           </div>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              setOpen(false)
+              onEdit?.(deal)
+            }}
+            className="w-full flex items-center space-x-2.5 px-3 py-2.5 text-sm text-left text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+          >
+            <Pencil className="h-4 w-4 text-blue-600 flex-shrink-0" />
+            <div className="flex flex-col items-start leading-tight min-w-0">
+              <span className="font-medium whitespace-nowrap">Edit Deal Terms</span>
+              <span className="text-[11px] text-gray-400 whitespace-nowrap">Loan amount, payback, dates</span>
+            </div>
+          </button>
+
+          <div className="border-t border-gray-100" />
+
           <button
             onClick={(e) => {
               e.stopPropagation()

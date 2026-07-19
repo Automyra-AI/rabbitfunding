@@ -4,6 +4,7 @@ import { formatCurrency, formatDate, addBusinessDays } from '../../utils/calcula
 import { useAuth } from '../../context/AuthContext'
 import { useData } from '../../context/DataContext'
 import DealActionsMenu from './DealActionsMenu'
+import EditDealModal from './EditDealModal'
 import MarkAsPaidModal from './MarkAsPaidModal'
 import DeleteDealModal from './DeleteDealModal'
 
@@ -12,6 +13,7 @@ const ITEMS_PER_PAGE = 25
 const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
   const [sortConfig, setSortConfig] = useState({ key: 'date_funded', direction: 'desc' })
   const [currentPage, setCurrentPage] = useState(1)
+  const [editingDeal, setEditingDeal] = useState(null)
   const [payingDeal, setPayingDeal] = useState(null)
   const [deletingDeal, setDeletingDeal] = useState(null)
   const { isAdmin } = useAuth()
@@ -190,7 +192,7 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
               <tr key={index} className="hover:bg-gray-50 transition-colors group">
                 {isAdmin && (
                   <td className="w-10 px-2 py-2.5 text-center">
-                    <DealActionsMenu deal={deal} onMarkAsPaid={setPayingDeal} onDelete={setDeletingDeal} />
+                    <DealActionsMenu deal={deal} onEdit={setEditingDeal} onMarkAsPaid={setPayingDeal} onDelete={setDeletingDeal} />
                   </td>
                 )}
                 {visibleColumns.state && (
@@ -385,6 +387,14 @@ const AdvancesTable = ({ deals, payoutEvents, visibleColumns }) => {
           </button>
         </div>
       </div>
+
+      {editingDeal && (
+        <EditDealModal
+          deal={editingDeal}
+          onClose={() => setEditingDeal(null)}
+          onSuccess={() => { refetch?.() }}
+        />
+      )}
 
       {payingDeal && (
         <MarkAsPaidModal

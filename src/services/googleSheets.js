@@ -278,7 +278,7 @@ export const fetchPayoutEvents = async () => {
 }
 
 // Update a transaction in the Payout Events sheet via Google Apps Script Web App
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxYpyiz0gv0fM-8wRHfLqLmb_AWeVrlOdE8NgimOkew5qhV9k-h4wQet3Pgvvnri1c/exec'
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby-TAckz0bI1yvPe6cNcAXgqEgCM1t19hAAUIMCKLVyMMLE8QRbXrzRWNoC-Uh-ewk/exec'
 
 export const updatePayoutEvent = async (historyKeyId, updates) => {
   try {
@@ -347,6 +347,40 @@ export const markDealAsPaid = async (deal, payment) => {
     return { success: true, historyKeyId }
   } catch (error) {
     console.error('Error marking deal as paid:', error)
+    throw error
+  }
+}
+
+// Update a deal's core terms (loan amount, payback amount, origination amount,
+// per-transaction payment, funded date, payment frequency) via the Apps Script Web App.
+// Only the raw sheet-backed fields are editable here — Paid, Fee, Status, Progress and
+// Balance are always recomputed by applyWaterfallVerification from Payout Events on the
+// next fetch, so they are never sent/written directly.
+export const updateDeal = async (deal, updates) => {
+  try {
+    const payload = {
+      action: 'updateDeal',
+      deal: {
+        qbo_customer_id: deal.qbo_customer_id || '',
+        qbo_customer_name: deal.qbo_customer_name || '',
+        client_name: deal.client_name || '',
+        contract_id: deal.contract_id || '',
+        deal_id: deal.deal_id || '',
+        actum_merchant_id: deal.actum_merchant_id || ''
+      },
+      updates
+    }
+
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    })
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error updating deal:', error)
     throw error
   }
 }
