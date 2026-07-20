@@ -1,14 +1,18 @@
 import { useState, useMemo } from 'react'
 import { useData } from '../context/DataContext'
+import { useAuth } from '../context/AuthContext'
 import LoadingSpinner from '../components/LoadingSpinner'
 import ErrorMessage from '../components/ErrorMessage'
 import AdvancesTable from '../components/advances/AdvancesTable'
 import AdvancesFilters from '../components/advances/AdvancesFilters'
-import { Briefcase, TrendingUp, ShieldCheck } from 'lucide-react'
+import AddDealModal from '../components/advances/AddDealModal'
+import { Briefcase, TrendingUp, ShieldCheck, Plus } from 'lucide-react'
 import { formatCurrency } from '../utils/calculations'
 
 const Advances = () => {
   const { deals, payoutEvents, loading, error, refetch } = useData()
+  const { isAdmin } = useAuth()
+  const [addingDeal, setAddingDeal] = useState(false)
   const [statusFilter, setStatusFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [amountFilter, setAmountFilter] = useState('all')
@@ -129,6 +133,15 @@ const Advances = () => {
                 <p className="text-lg font-bold text-orange-600">{formatCurrency(quickStats.totalPayback)}</p>
               </div>
             </div>
+            {isAdmin && (
+              <button
+                onClick={() => setAddingDeal(true)}
+                className="flex items-center space-x-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-sm font-semibold rounded-lg shadow-md hover:shadow-lg transition-all"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Add Deal</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -166,6 +179,14 @@ const Advances = () => {
         payoutEvents={payoutEvents}
         visibleColumns={visibleColumns}
       />
+
+      {addingDeal && (
+        <AddDealModal
+          deals={deals}
+          onClose={() => setAddingDeal(false)}
+          onSuccess={() => { refetch?.() }}
+        />
+      )}
     </div>
   )
 }

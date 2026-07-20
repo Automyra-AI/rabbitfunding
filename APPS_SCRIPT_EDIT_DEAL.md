@@ -1,9 +1,11 @@
-# Apps Script — Full Script with "Edit Deal Terms" Handler Added
+# Apps Script — Full Script with "Edit Deal Terms" + "Add Deal" Handlers Added
 
-This is your complete Apps Script, with the new `updateDeal` handler wired in
-(look for `// ── NEW: updateDeal ──` in `doPost` and the `handleUpdateDeal`
-function near the bottom). Everything else is untouched — same column mapping,
-same style as `handleDeleteDeal` / `markDealPaidInFull`.
+This is your complete Apps Script, with two handlers wired in:
+- `updateDeal` — look for `// ── NEW: updateDeal ──` in `doPost` and `handleUpdateDeal` further down.
+- `addDeal` — look for `// ── NEW: addDeal ──` in `doPost` and `handleAddDeal` near the bottom.
+
+Everything else is untouched — same column mapping, same style as
+`handleDeleteDeal` / `markDealPaidInFull`.
 
 **To deploy:** select all the code in your Apps Script project, replace it with
 the full script below, save, then **Deploy → Manage deployments → Edit → New
@@ -26,6 +28,36 @@ never touched here:
 
 These match the exact columns your `markDealPaidInFull` function already reads
 (col D = index 3, col G = index 6, col J = index 9, etc. — same 0-based scheme).
+
+## What `handleAddDeal` writes
+
+Appends a brand-new row to 💼 Deals. Before appending, it rejects the request
+if an active (non-deleted) row already exists with the same name in col B or
+col I — client name is the join key the waterfall verification and every
+other handler matches on, so duplicates would silently corrupt collections
+math for both deals.
+
+| Field                              | Column | 1-based col # | Default if omitted |
+|-------------------------------------|--------|----------------|---------------------|
+| `qbo_customer_id`                   | A      | 1              | `''`                |
+| `client_name`                       | B, I   | 2, 9           | *(required)*        |
+| `contract_id`                       | C      | 3              | `''`                |
+| `receivables_purchased_amount`      | D      | 4              | `0`                 |
+| `actum_merchant_id`                 | E      | 5              | `''`                |
+| `funded_date`                       | F, L   | 6, 12          | today                |
+| `purchase_price`                    | G      | 7              | `0`                 |
+| `deal_id`                           | H      | 8              | `''`                |
+| — Principal Collected                | J      | 10             | `0`                  |
+| — Status                             | K      | 11             | `'Active'`            |
+| `last_payment_amount`               | S      | 19             | `0`                  |
+| — Fee Collected                      | U      | 21             | `0`                   |
+| `customer_email`                    | V      | 22             | `''`                 |
+| `syndicated_amount_origination`     | W      | 23             | `0`                   |
+| `payment_frequency`                 | X      | 24             | `'Business Day'`      |
+| — Deleted                            | Y      | 25             | `false`                |
+
+Rows marked `—` are always set by the handler itself (not caller-supplied) so
+every new deal starts in the same clean state as a real funded deal.
 
 ## Full Script
 
@@ -377,6 +409,12 @@ function doPost(e) {
     }
     // ────────────────────────────────────────
 
+    // ── NEW: addDeal ─────────────────────────
+    if (data.action === 'addDeal') {
+      return handleAddDeal(data)
+    }
+    // ────────────────────────────────────────
+
     return ContentService
       .createTextOutput(JSON.stringify({ success: false, error: 'Unknown action' }))
       .setMimeType(ContentService.MimeType.JSON)
@@ -678,6 +716,88 @@ function handleUpdateDeal(data) {
     .setMimeType(ContentService.MimeType.JSON)
 }
 
+// ============================================
+// ADD NEW DEAL
+// Appends a brand-new row to 💼 Deals with sane defaults (Principal Collected
+// = $0, Fee Collected = $0, Status = Active, Deleted = FALSE) so it shows up
+// in the app immediately and starts collecting through the normal waterfall.
+// Rejects the request if an active deal with the same client name already
+// exists, since client name is the join key everything else matches on.
+// ============================================
+function handleAddDeal(data) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const deal = data.deal || {}
+
+  const clientName = String(deal.client_name || deal.qbo_customer_name || '').trim()
+  if (!clientName) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ success: false, error: 'Client name is required' }))
+      .setMimeType(ContentService.MimeType.JSON)
+  }
+
+  const dealsSheet = ss.getSheetByName('💼 Deals')
+  if (!dealsSheet) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ success: false, error: '💼 Deals sheet not found' }))
+      .setMimeType(ContentService.MimeType.JSON)
+  }
+
+  // Reject duplicates — client name is the join key the whole app matches on
+  const dealsData = dealsSheet.getDataRange().getValues()
+  const key = clientName.toLowerCase()
+  for (let i = 1; i < dealsData.length; i++) {
+    const rowQbo = String(dealsData[i][1] || '').toLowerCase().trim()    // col B
+    const rowClient = String(dealsData[i][8] || '').toLowerCase().trim() // col I
+    const rowDeleted = dealsData[i][24] === true                          // col Y
+    if (!rowDeleted && (rowQbo === key || rowClient === key)) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ success: false, error: 'A deal for "' + clientName + '" already exists' }))
+        .setMimeType(ContentService.MimeType.JSON)
+    }
+  }
+
+  // "YYYY-MM-DD" -> local Date built from components (avoids UTC day-shift)
+  let fundedDate = new Date()
+  if (deal.funded_date) {
+    const parts = String(deal.funded_date).split('-')
+    fundedDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+  }
+  const now = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'MMM dd, yyyy hh:mm a')
+
+  const newRow = [
+    deal.qbo_customer_id || '',                       // A  QBO Customer ID
+    clientName,                                        // B  QBO Customer Name
+    deal.contract_id || '',                            // C  Contract ID
+    Number(deal.receivables_purchased_amount) || 0,    // D  Receivables Purchased Amount (Payback)
+    deal.actum_merchant_id || '',                      // E  Actum Merchant ID
+    fundedDate,                                         // F  Funded Date
+    Number(deal.purchase_price) || 0,                   // G  Purchase Price (Loan Amount)
+    deal.deal_id || '',                                 // H  Deal ID
+    clientName,                                         // I  Client Name
+    0,                                                   // J  Principal Collected
+    'Active',                                            // K  Status
+    fundedDate,                                          // L  Funded Date (duplicate)
+    '',                                                  // M  Expected Amount
+    '',                                                  // N  Expected Amount Low
+    '',                                                  // O  Expected Amount High
+    now,                                                 // P  Updated Date
+    '',                                                  // Q  Last QBO JE
+    '',                                                  // R  Last Payment Date
+    Number(deal.last_payment_amount) || 0,               // S  Last Payment Amount
+    '',                                                   // T  Last HistoryKey ID
+    0,                                                     // U  Fee Collected
+    deal.customer_email || '',                             // V  Customer Email
+    Number(deal.syndicated_amount_origination) || 0,        // W  Syndicated Amount - Origination
+    deal.payment_frequency || 'Business Day',                // X  Payment Frequency
+    false                                                     // Y  Deleted
+  ]
+  dealsSheet.appendRow(newRow)
+
+  return ContentService
+    .createTextOutput(JSON.stringify({ success: true, row: dealsSheet.getLastRow() }))
+    .setMimeType(ContentService.MimeType.JSON)
+}
+
 function doGet(e) {
   return ContentService
     .createTextOutput(JSON.stringify({ status: 'ok' }))
@@ -694,3 +814,11 @@ function doGet(e) {
    - **Syndicated** column reflects the new Loan Amount.
    - **Factor**, **Origination Fee**, **Payback**, **Balance**, **Progress**, **Est. Payoff** all recompute to match.
 5. Open the spreadsheet directly and confirm the 💼 Deals row's columns D/F/G/S/W/X were updated.
+
+### Add Deal
+
+1. Log in as an admin user. Go to **Advances** → click **Add Deal** (top right).
+2. Fill in Client Name, Loan Amount, Total Payback, Funded Date → **Add Deal**.
+3. Try submitting a second deal with the exact same Client Name — the modal should block it client-side with "An active deal for this client already exists" before it ever reaches the sheet.
+4. Within ~60s (next auto-refresh) or after a manual refresh, the new deal appears in the Advances table as **Active** with $0 Paid, $0 Fee, matching the Loan Amount / Payback you entered.
+5. Open the spreadsheet directly and confirm a new row was appended to 💼 Deals with columns A–Y populated per the table above.

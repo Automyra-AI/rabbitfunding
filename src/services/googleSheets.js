@@ -385,6 +385,44 @@ export const updateDeal = async (deal, updates) => {
   }
 }
 
+// Add a brand-new deal via the Apps Script Web App. Appends a row to the Deals
+// sheet with Principal Collected = $0, Fee Collected = $0, Status = Active,
+// Deleted = FALSE — it shows up immediately and starts collecting through the
+// normal waterfall like any other deal, same as everything else on this page.
+export const addDeal = async (deal) => {
+  try {
+    const payload = {
+      action: 'addDeal',
+      deal: {
+        qbo_customer_id: deal.qbo_customer_id || '',
+        client_name: deal.client_name || '',
+        contract_id: deal.contract_id || '',
+        deal_id: deal.deal_id || '',
+        actum_merchant_id: deal.actum_merchant_id || '',
+        customer_email: deal.customer_email || '',
+        purchase_price: Number(deal.purchase_price) || 0,
+        receivables_purchased_amount: Number(deal.receivables_purchased_amount) || 0,
+        syndicated_amount_origination: Number(deal.syndicated_amount_origination) || 0,
+        last_payment_amount: Number(deal.last_payment_amount) || 0,
+        funded_date: deal.funded_date || '',
+        payment_frequency: deal.payment_frequency || 'Business Day'
+      }
+    }
+
+    await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    })
+
+    return { success: true }
+  } catch (error) {
+    console.error('Error adding deal:', error)
+    throw error
+  }
+}
+
 // Soft-delete a deal (whole customer) AND all of its related transactions.
 // Does NOT remove rows from the sheet — the Apps Script sets a "Deleted" flag to TRUE
 // on the deal's row in the Deals sheet and on every matching Payout Events row.
